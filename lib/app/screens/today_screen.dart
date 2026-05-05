@@ -57,23 +57,9 @@ class TodayScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   // ─── Log Food Buttons ────
                   _buildLogFoodButtons(context),
-                  const SizedBox(height: 24),
-                  // ─── Schedule Header ─────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Daily Schedule', style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
-                      )),
-                      Text(
-                        '${state.schedule.where((i) => i.done).length}/${state.schedule.length} done',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // ─── Schedule Items ──────
-                  ...state.schedule.map((item) => _buildScheduleItem(item, ref)),
+                  const SizedBox(height: 28),
+                  // ─── Schedule Section ─────
+                  _buildScheduleSection(state, ref),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -397,7 +383,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Score Row ────────────────────────────────────────────
+  // ─── Score Row (Circular Progress Rings) ───────────────────
   Widget _buildScoreRow(AppNotifier notifier, UserProfile profile, AppState state) {
     final dietScore = notifier.dietScore;
     final waterScore = notifier.waterScore;
@@ -407,49 +393,133 @@ class TodayScreen extends ConsumerWidget {
       (i.type == ScheduleItemType.workout || i.type == ScheduleItemType.walk) && i.done);
 
     final cards = <Widget>[
-      _scoreCard('Diet', '$mealsDone/${meals.length}', dietScore / 100, AppColors.green),
-      _scoreCard('Water', '$waterScore%', waterScore / 100, AppColors.blue),
-      _scoreCard('Workout', workoutDone ? 'Done' : '—', workoutDone ? 1.0 : 0.0, AppColors.amber),
+      _scoreCard('Diet', '$mealsDone/${meals.length}', dietScore / 100, AppColors.green, Icons.restaurant_outlined),
+      _scoreCard('Water', '$waterScore%', waterScore / 100, AppColors.blue, Icons.water_drop_outlined),
+      _scoreCard('Workout', workoutDone ? '✓' : '—', workoutDone ? 1.0 : 0.0, AppColors.amber, Icons.fitness_center_outlined),
     ];
 
     if (profile.mode == AppMode.gym) {
       final pTarget = profile.macroTargets.protein;
       final pEaten = notifier.proteinEaten;
-      cards.add(_scoreCard('Protein', '${pEaten.toInt()}g/${pTarget.toInt()}g',
-        pTarget > 0 ? (pEaten / pTarget).clamp(0.0, 1.0) : 0.0, AppColors.lavender));
+      cards.add(_scoreCard('Protein', '${pEaten.toInt()}g', pTarget > 0 ? (pEaten / pTarget).clamp(0.0, 1.0) : 0.0, AppColors.lavender, Icons.egg_outlined));
     }
 
     return Row(
       children: cards.map((c) => Expanded(child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         child: c,
       ))).toList(),
     );
   }
 
-  Widget _scoreCard(String label, String value, double fill, Color color) {
+  Widget _scoreCard(String label, String value, double fill, Color color, IconData icon) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
       decoration: BoxDecoration(
         color: AppColors.bg1,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withOpacity(0.15)),
       ),
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-          const SizedBox(height: 6),
+          SizedBox(
+            width: 46, height: 46,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 46, height: 46,
+                  child: CircularProgressIndicator(
+                    value: fill,
+                    strokeWidth: 3.5,
+                    backgroundColor: AppColors.bg3,
+                    valueColor: AlwaysStoppedAnimation(color),
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+                Icon(icon, size: 18, color: color),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(value, style: TextStyle(
-            fontSize: 13, fontWeight: FontWeight.bold, color: color,
+            fontSize: 13, fontWeight: FontWeight.w800, color: color,
           )),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: fill,
-              minHeight: 3,
-              backgroundColor: AppColors.bg3,
-              valueColor: AlwaysStoppedAnimation(color),
+          const SizedBox(height: 2),
+          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+        ],
+      ),
+    );
+  }
+
+  // ─── Calorie Card (Donut style) ───────────────────────────
+  Widget _buildCalorieCard(double eaten, MacroTargets targets) {
+    final remaining = targets.calories - eaten;
+    final overBudget = remaining < 0;
+    final pct = targets.calories > 0 ? (eaten / targets.calories).clamp(0.0, 1.0) : 0.0;
+    Color ringColor = AppColors.green;
+    if (overBudget) {
+      ringColor = (eaten / targets.calories) > 1.1 ? AppColors.red : AppColors.amber;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border1),
+      ),
+      child: Row(
+        children: [
+          // Donut ring
+          SizedBox(
+            width: 90, height: 90,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 90, height: 90,
+                  child: CircularProgressIndicator(
+                    value: pct,
+                    strokeWidth: 8,
+                    backgroundColor: AppColors.bg3,
+                    valueColor: AlwaysStoppedAnimation(ringColor),
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('${(pct * 100).toInt()}%', style: TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.w800, color: ringColor,
+                    )),
+                    const Text('eaten', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          // Stats column
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Calories', style: TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+                )),
+                const SizedBox(height: 12),
+                _calorieStat('Eaten', '${eaten.toInt()}', 'kcal', AppColors.accent),
+                const SizedBox(height: 8),
+                _calorieStat('Target', '${targets.calories.toInt()}', 'kcal', AppColors.textSecondary),
+                const SizedBox(height: 8),
+                _calorieStat(
+                  overBudget ? 'Over' : 'Left',
+                  '${remaining.abs().toInt()}',
+                  'kcal',
+                  overBudget ? AppColors.red : AppColors.green,
+                ),
+              ],
             ),
           ),
         ],
@@ -457,20 +527,29 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Calorie Card ─────────────────────────────────────────
-  Widget _buildCalorieCard(double eaten, MacroTargets targets) {
-    final remaining = targets.calories - eaten;
-    final overBudget = remaining < 0;
-    Color barColor = AppColors.green;
-    if (overBudget) {
-      barColor = (eaten / targets.calories) > 1.1 ? AppColors.red : AppColors.amber;
-    }
+  Widget _calorieStat(String label, String value, String unit, Color color) {
+    return Row(
+      children: [
+        Container(width: 3, height: 16, decoration: BoxDecoration(
+          color: color, borderRadius: BorderRadius.circular(2),
+        )),
+        const SizedBox(width: 8),
+        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        const Spacer(),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color)),
+        const SizedBox(width: 3),
+        Text(unit, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+      ],
+    );
+  }
 
+  // ─── Macro Card (Visual bars with percentage) ─────────────
+  Widget _buildMacroCard(double pEaten, double cEaten, double fEaten, MacroTargets t, AppMode mode) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.bg1,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.border1),
       ),
       child: Column(
@@ -479,83 +558,67 @@ class TodayScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Calories today', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-              Text('${eaten.toInt()} / ${targets.calories.toInt()} kcal',
-                style: const TextStyle(fontSize: 12, color: AppColors.accentSoft)),
+              Text(mode == AppMode.gym ? 'Macros' : 'Nutrition',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.bg3, borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('${(pEaten * 4 + cEaten * 4 + fEaten * 9).toInt()} kcal from macros',
+                  style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: targets.calories > 0 ? (eaten / targets.calories).clamp(0.0, 1.5) : 0,
-              minHeight: 8,
-              backgroundColor: AppColors.bg3,
-              valueColor: AlwaysStoppedAnimation(barColor),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            overBudget
-              ? '${remaining.abs().toInt()} kcal over budget'
-              : '${remaining.toInt()} kcal remaining',
-            style: TextStyle(fontSize: 11, color: overBudget ? AppColors.red : AppColors.textMuted),
-          ),
+          const SizedBox(height: 16),
+          _macroRow('Protein', pEaten, t.protein, AppColors.lavender, Icons.egg_outlined),
+          const SizedBox(height: 14),
+          _macroRow('Carbs', cEaten, t.carbs, AppColors.amber, Icons.grain_outlined),
+          const SizedBox(height: 14),
+          _macroRow('Fat', fEaten, t.fat, AppColors.teal, Icons.water_drop_outlined),
         ],
       ),
     );
   }
 
-  // ─── Macro Card ───────────────────────────────────────────
-  Widget _buildMacroCard(double pEaten, double cEaten, double fEaten, MacroTargets t, AppMode mode) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.bg1,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(mode == AppMode.gym ? 'Macros today' : 'Nutrition',
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          const SizedBox(height: 12),
-          _macroRow('Protein', pEaten, t.protein, AppColors.lavender),
-          const SizedBox(height: 10),
-          _macroRow('Carbs', cEaten, t.carbs, AppColors.amber),
-          const SizedBox(height: 10),
-          _macroRow('Fat', fEaten, t.fat, AppColors.teal),
-        ],
-      ),
-    );
-  }
-
-  Widget _macroRow(String label, double current, double target, Color color) {
+  Widget _macroRow(String label, double current, double target, Color color, IconData icon) {
     final over = current > target;
-    return Row(
+    final pct = target > 0 ? (current / target * 100).clamp(0, 999).toInt() : 0;
+    return Column(
       children: [
-        SizedBox(width: 56, child: Text(label, style: const TextStyle(
-          fontSize: 12, color: AppColors.textSecondary,
-        ))),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: target > 0 ? (current / target).clamp(0.0, 1.0) : 0,
-              minHeight: 6,
-              backgroundColor: AppColors.bg3,
-              valueColor: AlwaysStoppedAnimation(over ? AppColors.red : color),
+        Row(
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            const Spacer(),
+            Text('${current.toInt()}g', style: TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w700, color: over ? AppColors.red : color,
+            )),
+            Text(' / ${target.toInt()}g', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: (over ? AppColors.red : color).withOpacity(0.15),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text('$pct%', style: TextStyle(
+                fontSize: 9, fontWeight: FontWeight.bold, color: over ? AppColors.red : color,
+              )),
             ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: target > 0 ? (current / target).clamp(0.0, 1.0) : 0,
+            minHeight: 6,
+            backgroundColor: AppColors.bg3,
+            valueColor: AlwaysStoppedAnimation(over ? AppColors.red : color),
           ),
         ),
-        const SizedBox(width: 10),
-        SizedBox(width: 80, child: Text(
-          '${current.toInt()}g / ${target.toInt()}g',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold,
-            color: over ? AppColors.red : AppColors.white),
-          textAlign: TextAlign.right,
-        )),
       ],
     );
   }
@@ -776,85 +839,218 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Log Food Buttons ─────────────────────────────────────
+  // ─── Log Food Buttons (Gradient) ───────────────────────────
   Widget _buildLogFoodButtons(BuildContext context) {
+    final meals = [
+      {'icon': '🍳', 'label': 'Breakfast', 'key': 'breakfast', 'color': const Color(0xFF2E5A1A)},
+      {'icon': '🍛', 'label': 'Lunch', 'key': 'lunch', 'color': const Color(0xFF5A3A1A)},
+      {'icon': '🍽️', 'label': 'Dinner', 'key': 'dinner', 'color': const Color(0xFF1A2E5A)},
+      {'icon': '🥜', 'label': 'Snack', 'key': 'snack', 'color': const Color(0xFF3A1A5A)},
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Log your food', style: TextStyle(
-          fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
-        )),
-        const SizedBox(height: 4),
-        const Text('Tap to pick what you ate — calories auto-calculated',
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-        const SizedBox(height: 12),
         Row(
           children: [
-            _foodLogBtn(context, '🍳', 'Breakfast', 'breakfast'),
+            const Icon(Icons.add_circle, size: 18, color: AppColors.accent),
             const SizedBox(width: 8),
-            _foodLogBtn(context, '🍛', 'Lunch', 'lunch'),
-            const SizedBox(width: 8),
-            _foodLogBtn(context, '🍽️', 'Dinner', 'dinner'),
-            const SizedBox(width: 8),
-            _foodLogBtn(context, '🥜', 'Snack', 'snack'),
+            const Text('Log your food', style: TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+            )),
           ],
+        ),
+        const SizedBox(height: 4),
+        const Text('Tap a meal to add foods — calories auto-tracked',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        const SizedBox(height: 14),
+        Row(
+          children: meals.map((m) => Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(right: m != meals.last ? 10 : 0),
+              child: InkWell(
+                onTap: () => showFoodPicker(context, m['key'] as String),
+                borderRadius: BorderRadius.circular(18),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft, end: Alignment.bottomRight,
+                      colors: [
+                        (m['color'] as Color).withOpacity(0.7),
+                        (m['color'] as Color).withOpacity(0.3),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: (m['color'] as Color).withOpacity(0.4)),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(m['icon'] as String, style: const TextStyle(fontSize: 26)),
+                      const SizedBox(height: 6),
+                      Text(m['label'] as String, style: const TextStyle(
+                        fontSize: 11, color: AppColors.white, fontWeight: FontWeight.w600,
+                      )),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          )).toList(),
         ),
       ],
     );
   }
 
-  Widget _foodLogBtn(BuildContext context, String icon, String label, String category) {
-    return Expanded(
-      child: InkWell(
-        onTap: () => showFoodPicker(context, category),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+  // ─── Schedule Section (Timeline) ──────────────────────────
+  Widget _buildScheduleSection(AppState state, WidgetRef ref) {
+    final schedule = state.schedule;
+    final doneCount = schedule.where((i) => i.done).length;
+    final totalCount = schedule.length;
+    final pct = totalCount > 0 ? doneCount / totalCount : 0.0;
+
+    // Group items by time-of-day
+    final morning = schedule.where((i) => _timeToHour(i.time) < 12).toList();
+    final afternoon = schedule.where((i) => _timeToHour(i.time) >= 12 && _timeToHour(i.time) < 17).toList();
+    final evening = schedule.where((i) => _timeToHour(i.time) >= 17).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header with progress
+        Container(
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.bg1,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.border1),
           ),
           child: Column(
             children: [
-              Text(icon, style: const TextStyle(fontSize: 24)),
-              const SizedBox(height: 4),
-              Text(label, style: const TextStyle(
-                fontSize: 11, color: AppColors.textSecondary, fontWeight: FontWeight.w500,
-              )),
+              Row(
+                children: [
+                  const Icon(Icons.schedule_rounded, size: 20, color: AppColors.accent),
+                  const SizedBox(width: 10),
+                  const Text('Daily Schedule', style: TextStyle(
+                    fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.white,
+                  )),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: pct >= 1.0 ? AppColors.green.withOpacity(0.15) : AppColors.accent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '$doneCount / $totalCount done',
+                      style: TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w700,
+                        color: pct >= 1.0 ? AppColors.green : AppColors.accent,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: pct,
+                  minHeight: 6,
+                  backgroundColor: AppColors.bg3,
+                  valueColor: AlwaysStoppedAnimation(
+                    pct >= 1.0 ? AppColors.green : AppColors.accent,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        // Time-of-day groups
+        if (morning.isNotEmpty)
+          _buildTimeGroup('🌅  Morning', morning, ref),
+        if (afternoon.isNotEmpty)
+          _buildTimeGroup('☀️  Afternoon', afternoon, ref),
+        if (evening.isNotEmpty)
+          _buildTimeGroup('🌙  Evening', evening, ref),
+      ],
     );
   }
 
-  // ─── Schedule Item ────────────────────────────────────────
+  int _timeToHour(String time) {
+    final parts = time.split(':');
+    return int.tryParse(parts[0]) ?? 12;
+  }
+
+  Widget _buildTimeGroup(String label, List<ScheduleItem> items, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10, top: 4),
+          child: Text(label, style: const TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textSecondary,
+          )),
+        ),
+        ...items.map((item) => _buildScheduleItem(item, ref)),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  // ─── Schedule Item (Timeline style) ───────────────────────
   Widget _buildScheduleItem(ScheduleItem item, WidgetRef ref) {
-    final iconBg = _getColorForType(item.type);
+    final typeColor = _getAccentForType(item.type);
     final hasMacros = item.calories > 0 || item.protein > 0;
 
-    return AnimatedOpacity(
-      opacity: item.done ? 0.5 : 1.0,
-      duration: const Duration(milliseconds: 200),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+    return GestureDetector(
+      onTap: () => ref.read(appProvider.notifier).toggleScheduleItem(item.id),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.bg1,
-          borderRadius: BorderRadius.circular(16),
+          color: item.done ? AppColors.bg1.withOpacity(0.5) : AppColors.bg1,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: item.done ? AppColors.green.withOpacity(0.2) : AppColors.border1,
+          ),
         ),
         child: Row(
           children: [
+            // Timeline dot + time
+            Column(
+              children: [
+                Container(
+                  width: 10, height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: item.done ? AppColors.green : typeColor.withOpacity(0.5),
+                    border: Border.all(
+                      color: item.done ? AppColors.green : typeColor, width: 2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(item.time, style: TextStyle(
+                  fontSize: 10, fontWeight: FontWeight.w600,
+                  color: item.done ? AppColors.textMuted : AppColors.textSecondary,
+                )),
+              ],
+            ),
+            const SizedBox(width: 12),
             // Icon
             Container(
-              width: 40, height: 40,
+              width: 42, height: 42,
               decoration: BoxDecoration(
-                color: iconBg.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(12),
+                color: _getColorForType(item.type).withOpacity(item.done ? 0.15 : 0.4),
+                borderRadius: BorderRadius.circular(14),
               ),
               alignment: Alignment.center,
-              child: Text(item.icon, style: const TextStyle(fontSize: 18)),
+              child: Text(item.icon, style: TextStyle(fontSize: 20,
+                color: item.done ? Colors.white54 : null)),
             ),
             const SizedBox(width: 12),
             // Content
@@ -865,44 +1061,67 @@ class TodayScreen extends ConsumerWidget {
                   Text(
                     item.title,
                     style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.bold,
-                      color: item.done ? AppColors.textSecondary : AppColors.white,
+                      fontSize: 14, fontWeight: FontWeight.w700,
+                      color: item.done ? AppColors.textMuted : AppColors.white,
                       decoration: item.done ? TextDecoration.lineThrough : null,
+                      decorationColor: AppColors.textMuted,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text.rich(
-                    TextSpan(children: [
-                      TextSpan(text: item.time, style: const TextStyle(color: AppColors.textMuted)),
-                      TextSpan(text: ' · ${item.sub}'),
-                      if (hasMacros) ...[
-                        TextSpan(text: ' · ${item.calories.toInt()}kcal',
-                          style: const TextStyle(color: AppColors.accentSoft)),
-                        if (item.protein > 0) TextSpan(
-                          text: ' · P:${item.protein.toInt()}g',
-                          style: const TextStyle(color: AppColors.blue),
-                        ),
+                  const SizedBox(height: 3),
+                  Text(item.sub, style: TextStyle(
+                    fontSize: 11,
+                    color: item.done ? AppColors.textMuted : AppColors.textSecondary,
+                  )),
+                  if (hasMacros && !item.done) ...[
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      children: [
+                        _schedMacroChip('${item.calories.toInt()} kcal', AppColors.accent),
+                        if (item.protein > 0)
+                          _schedMacroChip('P: ${item.protein.toInt()}g', AppColors.lavender),
+                        if (item.carbs > 0)
+                          _schedMacroChip('C: ${item.carbs.toInt()}g', AppColors.amber),
+                        if (item.fat > 0)
+                          _schedMacroChip('F: ${item.fat.toInt()}g', AppColors.teal),
                       ],
-                    ]),
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            // Check
-            SizedBox(
-              width: 30, height: 30,
-              child: Checkbox(
-                value: item.done,
-                onChanged: (_) => ref.read(appProvider.notifier).toggleScheduleItem(item.id),
-                activeColor: AppColors.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                side: const BorderSide(color: AppColors.textMuted, width: 1.5),
+            // Done indicator
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: item.done ? AppColors.green.withOpacity(0.15) : Colors.transparent,
+                border: Border.all(
+                  color: item.done ? AppColors.green : AppColors.textMuted.withOpacity(0.5),
+                  width: 2,
+                ),
               ),
+              child: item.done
+                ? const Icon(Icons.check_rounded, size: 16, color: AppColors.green)
+                : null,
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _schedMacroChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(text, style: TextStyle(
+        fontSize: 10, fontWeight: FontWeight.w600, color: color,
+      )),
     );
   }
 
@@ -925,6 +1144,19 @@ class TodayScreen extends ConsumerWidget {
       case ScheduleItemType.walk: return AppColors.iconWalk;
       case ScheduleItemType.protein: return AppColors.iconProtein;
       default: return AppColors.iconCustom;
+    }
+  }
+
+  Color _getAccentForType(ScheduleItemType type) {
+    switch (type) {
+      case ScheduleItemType.meal: return AppColors.green;
+      case ScheduleItemType.snack: return AppColors.amber;
+      case ScheduleItemType.workout: return AppColors.red;
+      case ScheduleItemType.water: return AppColors.blue;
+      case ScheduleItemType.sleep: return AppColors.lavender;
+      case ScheduleItemType.walk: return AppColors.teal;
+      case ScheduleItemType.protein: return AppColors.blue;
+      default: return AppColors.accent;
     }
   }
 }
