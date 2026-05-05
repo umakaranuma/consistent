@@ -36,6 +36,38 @@ class ScheduleItem {
     required this.remOn,
     required this.isCustom,
   });
+
+  ScheduleItem copyWith({
+    String? id,
+    String? time,
+    String? title,
+    String? sub,
+    String? icon,
+    ScheduleItemType? type,
+    double? calories,
+    double? protein,
+    double? carbs,
+    double? fat,
+    bool? done,
+    bool? remOn,
+    bool? isCustom,
+  }) {
+    return ScheduleItem(
+      id: id ?? this.id,
+      time: time ?? this.time,
+      title: title ?? this.title,
+      sub: sub ?? this.sub,
+      icon: icon ?? this.icon,
+      type: type ?? this.type,
+      calories: calories ?? this.calories,
+      protein: protein ?? this.protein,
+      carbs: carbs ?? this.carbs,
+      fat: fat ?? this.fat,
+      done: done ?? this.done,
+      remOn: remOn ?? this.remOn,
+      isCustom: isCustom ?? this.isCustom,
+    );
+  }
 }
 
 class MacroTargets {
@@ -50,6 +82,15 @@ class MacroTargets {
     required this.carbs,
     required this.fat,
   });
+
+  MacroTargets copyWith({double? calories, double? protein, double? carbs, double? fat}) {
+    return MacroTargets(
+      calories: calories ?? this.calories,
+      protein: protein ?? this.protein,
+      carbs: carbs ?? this.carbs,
+      fat: fat ?? this.fat,
+    );
+  }
 }
 
 class WaterConfig {
@@ -70,6 +111,26 @@ class WaterConfig {
     required this.reminderEndTime,
     required this.mlPerReminder,
   });
+
+  WaterConfig copyWith({
+    double? consumed,
+    double? target,
+    bool? reminderEnabled,
+    double? reminderIntervalMinutes,
+    String? reminderStartTime,
+    String? reminderEndTime,
+    double? mlPerReminder,
+  }) {
+    return WaterConfig(
+      consumed: consumed ?? this.consumed,
+      target: target ?? this.target,
+      reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+      reminderIntervalMinutes: reminderIntervalMinutes ?? this.reminderIntervalMinutes,
+      reminderStartTime: reminderStartTime ?? this.reminderStartTime,
+      reminderEndTime: reminderEndTime ?? this.reminderEndTime,
+      mlPerReminder: mlPerReminder ?? this.mlPerReminder,
+    );
+  }
 }
 
 class WeightEntry {
@@ -86,16 +147,19 @@ class WeightEntry {
 
 class UserProfile {
   final String name;
+  final double age;
+  final String gender; // 'male' | 'female'
   final double heightCm;
   final double currentWeight;
   final double goalWeight;
   final double bmi;
   final BmiCategory bmiCategory;
   final AppMode mode;
-  final GymGoal? gymGoal; // Optional, only for gym mode
+  final GymGoal? gymGoal;
   final double stepGoal;
   final MacroTargets macroTargets;
   final String units; // 'metric' | 'imperial'
+  final String activityLevel; // 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
   final String workStartTime;
   final String workEndTime;
   final String sleepTime;
@@ -106,6 +170,8 @@ class UserProfile {
 
   UserProfile({
     required this.name,
+    this.age = 25,
+    this.gender = 'male',
     required this.heightCm,
     required this.currentWeight,
     required this.goalWeight,
@@ -116,6 +182,7 @@ class UserProfile {
     required this.stepGoal,
     required this.macroTargets,
     required this.units,
+    this.activityLevel = 'moderate',
     required this.workStartTime,
     required this.workEndTime,
     required this.sleepTime,
@@ -124,6 +191,54 @@ class UserProfile {
     required this.sleepReminder,
     required this.planLockedByUser,
   });
+
+  UserProfile copyWith({
+    String? name,
+    double? age,
+    String? gender,
+    double? heightCm,
+    double? currentWeight,
+    double? goalWeight,
+    double? bmi,
+    BmiCategory? bmiCategory,
+    AppMode? mode,
+    GymGoal? gymGoal,
+    double? stepGoal,
+    MacroTargets? macroTargets,
+    String? units,
+    String? activityLevel,
+    String? workStartTime,
+    String? workEndTime,
+    String? sleepTime,
+    bool? pushEnabled,
+    bool? workoutReminders,
+    bool? sleepReminder,
+    bool? planLockedByUser,
+  }) {
+    return UserProfile(
+      name: name ?? this.name,
+      age: age ?? this.age,
+      gender: gender ?? this.gender,
+      heightCm: heightCm ?? this.heightCm,
+      currentWeight: currentWeight ?? this.currentWeight,
+      goalWeight: goalWeight ?? this.goalWeight,
+      bmi: bmi ?? this.bmi,
+      bmiCategory: bmiCategory ?? this.bmiCategory,
+      mode: mode ?? this.mode,
+      gymGoal: gymGoal ?? this.gymGoal,
+      stepGoal: stepGoal ?? this.stepGoal,
+      macroTargets: macroTargets ?? this.macroTargets,
+      units: units ?? this.units,
+      activityLevel: activityLevel ?? this.activityLevel,
+      workStartTime: workStartTime ?? this.workStartTime,
+      workEndTime: workEndTime ?? this.workEndTime,
+      sleepTime: sleepTime ?? this.sleepTime,
+      pushEnabled: pushEnabled ?? this.pushEnabled,
+      workoutReminders: workoutReminders ?? this.workoutReminders,
+      sleepReminder: sleepReminder ?? this.sleepReminder,
+      planLockedByUser: planLockedByUser ?? this.planLockedByUser,
+    );
+  }
 }
 
 class Reminder {
@@ -180,5 +295,32 @@ class DayRecord {
     required this.proteinEaten,
     required this.bmiAtDay,
     required this.log,
+  });
+}
+
+/// A food item from the local food database
+class FoodItem {
+  final String id;
+  final String name;
+  final String category; // 'breakfast', 'lunch', 'dinner', 'snack'
+  final String description;
+  final String icon;
+  final double calories;
+  final double protein;
+  final double carbs;
+  final double fat;
+  final String servingSize;
+
+  const FoodItem({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.description,
+    required this.icon,
+    required this.calories,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
+    required this.servingSize,
   });
 }

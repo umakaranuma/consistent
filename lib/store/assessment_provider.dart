@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'types.dart';
 
+/// Temporary data holder during onboarding assessment flow.
+/// Not used after onboarding is complete — data is committed to appProvider.
 class AssessmentData {
   String name = '';
   AppMode mode = AppMode.normal;
@@ -16,6 +17,13 @@ class AssessmentData {
   AssessmentData();
 }
 
-final assessmentProvider = StateProvider<AssessmentData>(
-  (ref) => AssessmentData(),
+class AssessmentNotifier extends Notifier<AssessmentData> {
+  @override
+  AssessmentData build() => AssessmentData();
+
+  void update(AssessmentData data) => state = data;
+}
+
+final assessmentProvider = NotifierProvider<AssessmentNotifier, AssessmentData>(
+  () => AssessmentNotifier(),
 );
