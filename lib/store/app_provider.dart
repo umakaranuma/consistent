@@ -416,9 +416,12 @@ class AppNotifier extends Notifier<AppState> {
       insights.add({'type': 'info', 'icon': '🥗', 'title': 'Behind on calories',
         'msg': '${(calPct * 100).toInt()}% of target eaten. Consider a nutritious snack or a hearty lunch.'});
     }
-    if (calPct > 1.2 && calTarget > 0) {
-      insights.add({'type': 'warning', 'icon': '⚠️', 'title': 'Over calorie budget',
-        'msg': '${(calPct * 100).toInt()}% of target consumed. Consider a light walk and keep remaining meals light.'});
+    if (calPct > 1.0 && calPct <= 1.15 && calTarget > 0) {
+      insights.add({'type': 'warning', 'icon': '⚠️', 'title': 'Calorie limit reached',
+        'msg': 'You have hit 100% of your daily calories. Keep any remaining snacks light.'});
+    } else if (calPct > 1.15 && calTarget > 0) {
+      insights.add({'type': 'critical', 'icon': '🚨', 'title': 'Over calorie budget',
+        'msg': '${(calPct * 100).toInt()}% of target consumed. Consider a light walk to balance your intake.'});
     }
 
     // ── Protein Analysis ──
