@@ -45,7 +45,47 @@ class AppState {
 
 class AppNotifier extends Notifier<AppState> {
   @override
-  AppState build() => AppState();
+  AppState build() {
+    // Development mock data since persistence (Hive) is not yet wired up.
+    // This prevents the infinite spinner if the user hot-restarts after onboarding.
+    final defaultProfile = UserProfile(
+      name: 'Umakaran',
+      heightCm: 170,
+      currentWeight: 75,
+      goalWeight: 65,
+      bmi: 25.9,
+      bmiCategory: BmiCategory.overweight,
+      mode: AppMode.normal,
+      stepGoal: 10000,
+      macroTargets: MacroTargets(calories: 2000, protein: 120, carbs: 200, fat: 55),
+      units: 'metric',
+      workStartTime: '09:00',
+      workEndTime: '18:00',
+      sleepTime: '23:00',
+      pushEnabled: true,
+      workoutReminders: true,
+      sleepReminder: true,
+      planLockedByUser: false,
+    );
+
+    final waterConfig = WaterConfig(
+      consumed: 0,
+      target: 2750,
+      reminderEnabled: true,
+      reminderIntervalMinutes: 60,
+      reminderStartTime: '08:00',
+      reminderEndTime: '21:00',
+      mlPerReminder: 250,
+    );
+
+    final defaultSchedule = BmiEngine.generatePlan(defaultProfile);
+
+    return AppState(
+      profile: defaultProfile,
+      waterConfig: waterConfig,
+      schedule: defaultSchedule,
+    );
+  }
 
   void setProfile(UserProfile profile) {
     state = state.copyWith(profile: profile);
@@ -53,6 +93,26 @@ class AppNotifier extends Notifier<AppState> {
 
   void setWaterConfig(WaterConfig config) {
     state = state.copyWith(waterConfig: config);
+  }
+
+  void setSchedule(List<ScheduleItem> schedule) {
+    state = state.copyWith(schedule: schedule);
+  }
+
+  void addWater(double ml) {
+    if (state.waterConfig != null) {
+      final config = state.waterConfig!;
+      final newConfig = WaterConfig(
+        consumed: config.consumed + ml,
+        target: config.target,
+        reminderEnabled: config.reminderEnabled,
+        reminderIntervalMinutes: config.reminderIntervalMinutes,
+        reminderStartTime: config.reminderStartTime,
+        reminderEndTime: config.reminderEndTime,
+        mlPerReminder: config.mlPerReminder,
+      );
+      state = state.copyWith(waterConfig: newConfig);
+    }
   }
 
   void addWeightEntry(WeightEntry entry) {

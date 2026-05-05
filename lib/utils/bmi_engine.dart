@@ -1,5 +1,8 @@
 import 'dart:math';
+import 'package:uuid/uuid.dart';
 import '../store/types.dart';
+import '../constants/default_plan_normal.dart';
+import '../constants/default_plan_gym.dart';
 
 class BmiEngine {
   static double calculateBmi(double weightKg, double heightCm) {
@@ -116,5 +119,55 @@ class BmiEngine {
   static double getWaterTarget(double weightKg, AppMode mode) {
     final mlPerKg = mode == AppMode.gym ? 40 : 35;
     return ((weightKg * mlPerKg) / 250).round() * 250.0;
+  }
+
+  static List<ScheduleItem> generatePlan(UserProfile profile) {
+    List<Map<String, dynamic>> templates;
+    if (profile.mode == AppMode.gym) {
+      switch (profile.gymGoal) {
+        case GymGoal.fatLoss: templates = planGymFatLoss; break;
+        case GymGoal.muscleGain: templates = planGymMuscleGain; break;
+        case GymGoal.maintenance: templates = planGymMaintenance; break;
+        case GymGoal.recomp: templates = planGymRecomp; break;
+        default: templates = planGymFatLoss;
+      }
+    } else {
+      switch (profile.bmiCategory) {
+        case BmiCategory.underweight: templates = planNormalUnderweight; break;
+        case BmiCategory.normal: templates = planNormalHealthy; break;
+        case BmiCategory.overweight: templates = planNormalOverweight; break;
+        case BmiCategory.obese: templates = planNormalObese; break;
+      }
+    }
+
+    final uuid = Uuid();
+    return templates.map((t) {
+      ScheduleItemType type;
+      switch (t['type']) {
+        case 'meal': type = ScheduleItemType.meal; break;
+        case 'water': type = ScheduleItemType.water; break;
+        case 'workout': type = ScheduleItemType.workout; break;
+        case 'snack': type = ScheduleItemType.snack; break;
+        case 'sleep': type = ScheduleItemType.sleep; break;
+        case 'walk': type = ScheduleItemType.walk; break;
+        case 'protein': type = ScheduleItemType.protein; break;
+        default: type = ScheduleItemType.custom; break;
+      }
+      return ScheduleItem(
+        id: uuid.v4(),
+        time: t['time'],
+        title: t['title'],
+        sub: t['sub'],
+        icon: t['icon'],
+        type: type,
+        calories: t['calories'] ?? 0.0,
+        protein: t['protein'] ?? 0.0,
+        carbs: t['carbs'] ?? 0.0,
+        fat: t['fat'] ?? 0.0,
+        done: false,
+        remOn: false,
+        isCustom: false,
+      );
+    }).toList();
   }
 }

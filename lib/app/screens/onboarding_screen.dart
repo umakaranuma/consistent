@@ -105,6 +105,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     );
     ref.read(appProvider.notifier).setWaterConfig(waterConfig);
 
+    // Generate and set schedule
+    final schedule = BmiEngine.generatePlan(userProfile);
+    ref.read(appProvider.notifier).setSchedule(schedule);
+
     // Save to SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('vitatrack_onboarded', 'true');

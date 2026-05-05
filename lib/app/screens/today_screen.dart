@@ -29,11 +29,11 @@ class TodayScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 20),
-                  _buildMacroCard(profile),
+                  _buildMacroCard(profile, state.schedule),
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      Expanded(child: _buildWaterCard(state.waterConfig)),
+                      Expanded(child: _buildWaterCard(state.waterConfig, state.schedule)),
                       const SizedBox(width: 15),
                       Expanded(child: _buildStepsCard(profile.stepGoal)),
                     ],
@@ -103,13 +103,22 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMacroCard(UserProfile profile) {
+  Widget _buildMacroCard(UserProfile profile, List<ScheduleItem> schedule) {
     final targets = profile.macroTargets;
-    // For demo purposes, we'll show some progress
-    const eaten = 1200.0;
-    const pEaten = 85.0;
-    const cEaten = 110.0;
-    const fEaten = 45.0;
+    
+    double eaten = 0;
+    double pEaten = 0;
+    double cEaten = 0;
+    double fEaten = 0;
+
+    for (var item in schedule) {
+      if (item.done) {
+        eaten += item.calories;
+        pEaten += item.protein;
+        cEaten += item.carbs;
+        fEaten += item.fat;
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -148,14 +157,14 @@ class TodayScreen extends ConsumerWidget {
                     width: 60,
                     height: 60,
                     child: CircularProgressIndicator(
-                      value: eaten / targets.calories,
+                      value: targets.calories > 0 ? (eaten / targets.calories).clamp(0.0, 1.0) : 0,
                       strokeWidth: 6,
                       backgroundColor: AppColors.bg3,
                       valueColor: const AlwaysStoppedAnimation(AppColors.accent),
                     ),
                   ),
                   Text(
-                    '${(eaten / targets.calories * 100).toInt()}%',
+                    '${targets.calories > 0 ? (eaten / targets.calories * 100).toInt() : 0}%',
                     style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -185,7 +194,7 @@ class TodayScreen extends ConsumerWidget {
         SizedBox(
           width: 80,
           child: LinearProgressIndicator(
-            value: current / target,
+            value: target > 0 ? (current / target).clamp(0.0, 1.0) : 0,
             minHeight: 4,
             backgroundColor: AppColors.bg3,
             valueColor: AlwaysStoppedAnimation(color),
@@ -200,9 +209,16 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildWaterCard(WaterConfig? config) {
-    final current = config?.consumed ?? 0.0;
+  Widget _buildWaterCard(WaterConfig? config, List<ScheduleItem> schedule) {
+    double current = config?.consumed ?? 0.0;
     final target = config?.target ?? 2500.0;
+
+    // For demo/simplicity, if there are checked water items we can estimate
+    int waterItemsDone = schedule.where((i) => i.type == ScheduleItemType.water && i.done).length;
+    if (waterItemsDone > 0 && current == 0) {
+      // Just a fallback if user taps schedule items instead of the water button directly
+      current = waterItemsDone * 250.0;
+    }
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -214,7 +230,27 @@ class TodayScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.water_drop_outlined, color: AppColors.blue),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Icon(Icons.water_drop_outlined, color: AppColors.blue),
+              Consumer(builder: (context, ref, child) {
+                return InkWell(
+                  onTap: () {
+                    ref.read(appProvider.notifier).addWater(250);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.blue.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text('+ 250ml', style: TextStyle(color: AppColors.blue, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                );
+              }),
+            ],
+          ),
           const SizedBox(height: 12),
           const Text('Water', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           const SizedBox(height: 4),
@@ -224,7 +260,7 @@ class TodayScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
-            value: current / target,
+            value: target > 0 ? (current / target).clamp(0.0, 1.0) : 0,
             backgroundColor: AppColors.bg3,
             valueColor: const AlwaysStoppedAnimation(AppColors.blue),
             minHeight: 3,
@@ -269,26 +305,27 @@ class TodayScreen extends ConsumerWidget {
 
   Widget _buildScheduleList(List<ScheduleItem> items) {
     if (items.isEmpty) {
-      // Mock some items if empty for design
-      return Column(
-        children: [
-          _buildScheduleItem('08:00', 'Breakfast', 'Oatmeal & Fruits', '🥣', AppColors.iconMeal, true),
-          _buildScheduleItem('10:30', 'Morning Snack', 'Almonds & Yogurt', '🥜', AppColors.iconSnack, false),
-          _buildScheduleItem('13:00', 'Lunch', 'Chicken Salad', '🥗', AppColors.iconMeal, false),
-          _buildScheduleItem('17:00', 'Gym Workout', 'Upper Body Session', '💪', AppColors.iconWorkout, false),
-        ],
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Text('No schedule planned.', style: TextStyle(color: AppColors.textSecondary)),
+        ),
       );
     }
-    return Column(
-      children: items.map((item) => _buildScheduleItem(
-        item.time, 
-        item.title, 
-        item.sub, 
-        item.icon, 
-        _getColorForType(item.type),
-        item.done
-      )).toList(),
-    );
+    return Consumer(builder: (context, ref, child) {
+      return Column(
+        children: items.map((item) => _buildScheduleItem(
+          item.id,
+          item.time, 
+          item.title, 
+          item.sub, 
+          item.icon, 
+          _getColorForType(item.type),
+          item.done,
+          ref,
+        )).toList(),
+      );
+    });
   }
 
   Color _getColorForType(ScheduleItemType type) {
@@ -303,7 +340,7 @@ class TodayScreen extends ConsumerWidget {
     }
   }
 
-  Widget _buildScheduleItem(String time, String title, String sub, String icon, Color iconBg, bool done) {
+  Widget _buildScheduleItem(String id, String time, String title, String sub, String icon, Color iconBg, bool done, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(15),
@@ -344,7 +381,9 @@ class TodayScreen extends ConsumerWidget {
           ),
           Checkbox(
             value: done,
-            onChanged: (val) {},
+            onChanged: (val) {
+              ref.read(appProvider.notifier).toggleScheduleItem(id);
+            },
             activeColor: AppColors.accent,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           ),
