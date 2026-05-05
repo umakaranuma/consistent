@@ -38,7 +38,7 @@ class TodayScreen extends ConsumerWidget {
                 children: [
                   const SizedBox(height: 16),
                   // ─── BMI Card ────────────
-                  _buildBmiCard(context, profile),
+                  _buildBmiCard(context, profile, ref),
                   const SizedBox(height: 16),
                   // ─── Score Row ───────────
                   _buildScoreRow(notifier, profile, state),
@@ -145,27 +145,16 @@ class TodayScreen extends ConsumerWidget {
   }
 
   // ─── BMI Card ─────────────────────────────────────────────
-  Widget _buildBmiCard(BuildContext context, UserProfile profile) {
+  Widget _buildBmiCard(BuildContext context, UserProfile profile, WidgetRef ref) {
     final bmiColor = _bmiColor(profile.bmiCategory);
     final bmiLabel = BmiEngine.getBmiLabel(profile.bmiCategory);
     final idealRange = BmiEngine.getIdealWeightRange(profile.heightCm);
-    final barPos = ((profile.bmi - 15) / 25 * 100).clamp(0.0, 100.0);
-
-    double diff = 0;
-    String diffText = '';
-    Color diffColor = AppColors.green;
-    if (profile.bmi < 18.5) {
-      diff = idealRange['min']! - profile.currentWeight;
-      diffText = '${diff.toStringAsFixed(1)} kg below healthy range';
-      diffColor = AppColors.blue;
-    } else if (profile.bmi > 24.9) {
-      diff = profile.currentWeight - idealRange['max']!;
-      diffText = '${diff.toStringAsFixed(1)} kg above healthy range';
-      diffColor = profile.bmi >= 30 ? AppColors.red : AppColors.amber;
-    } else {
-      diffText = 'You are in healthy range!';
-      diffColor = AppColors.green;
-    }
+    
+    // Calculate marker position on a scale from BMI 15 to 40
+    final double minBmi = 15.0;
+    final double maxBmi = 40.0;
+    final double range = maxBmi - minBmi;
+    final double normalized = ((profile.bmi - minBmi) / range).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -180,59 +169,231 @@ class TodayScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('BMI', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-              InkWell(
-                onTap: () => Navigator.push(
-                  context, 
-                  MaterialPageRoute(builder: (_) => const BmiDetailsScreen()),
-                ),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text('Detail ›', style: TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.bold)),
-                ),
+              const Text('BMI & Weight', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () => _showWeightLogger(context, ref),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.add_circle_outline, size: 14, color: AppColors.accentSoft),
+                          const SizedBox(width: 4),
+                          Text('Log Weight', style: TextStyle(fontSize: 12, color: AppColors.accentSoft, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  InkWell(
+                    onTap: () => Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (_) => const BmiDetailsScreen()),
+                    ),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Text('Detail ›', style: TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(profile.bmi.toStringAsFixed(1), style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.w500, color: bmiColor,
-              )),
-              const SizedBox(width: 12),
-              Text(bmiLabel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: bmiColor)),
             ],
           ),
           const SizedBox(height: 12),
-          // BMI bar
-          Stack(
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
+              Text(profile.bmi.toStringAsFixed(1), style: TextStyle(
+                fontSize: 28, fontWeight: FontWeight.w800, color: bmiColor, height: 1.0,
+              )),
+              const SizedBox(width: 8),
               Container(
-                height: 8,
-                decoration: BoxDecoration(
-                  color: AppColors.bg3,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              FractionallySizedBox(
-                widthFactor: barPos / 100,
-                child: Container(
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: bmiColor,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
+                margin: const EdgeInsets.only(bottom: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(color: bmiColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
+                child: Text(bmiLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: bmiColor)),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text('Ideal: ${idealRange['min']}–${idealRange['max']} kg',
-            style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-          const SizedBox(height: 2),
-          Text(diffText, style: TextStyle(fontSize: 11, color: diffColor)),
+          const SizedBox(height: 16),
+          // Segmented BMI bar
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Column(
+                children: [
+                  // Marker
+                  SizedBox(
+                    height: 10,
+                    width: constraints.maxWidth,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          left: (constraints.maxWidth * normalized) - 5,
+                          child: const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Colored Bar
+                  Container(
+                    height: 8,
+                    width: constraints.maxWidth,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
+                    child: Row(
+                      children: [
+                        Expanded(flex: 35, child: Container(color: AppColors.bmiUnder)), // 15 - 18.5 (3.5)
+                        Expanded(flex: 65, child: Container(color: AppColors.bmiNormal)), // 18.5 - 25 (6.5)
+                        Expanded(flex: 50, child: Container(color: AppColors.bmiOver)), // 25 - 30 (5.0)
+                        Expanded(flex: 100, child: Container(color: AppColors.bmiObese)), // 30 - 40 (10.0)
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _bmiStatItem('Height', '${profile.heightCm.toInt()} cm'),
+              _bmiStatItem('Weight', '${profile.currentWeight.toStringAsFixed(1)} kg'),
+              _bmiStatItem('Ideal Range', '${idealRange['min']} - ${idealRange['max']} kg'),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _bmiStatItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white)),
+      ],
+    );
+  }
+
+  void _showWeightLogger(BuildContext context, WidgetRef ref) {
+    final state = ref.read(appProvider);
+    final weightCtrl = TextEditingController(text: state.profile?.currentWeight.toStringAsFixed(1) ?? '70.0');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
+            decoration: const BoxDecoration(
+              color: AppColors.bg1,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Log New Weight', style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
+                )),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: weightCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.accent),
+                  textAlign: TextAlign.center,
+                  decoration: InputDecoration(
+                    suffixText: 'kg',
+                    suffixStyle: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                    filled: true,
+                    fillColor: AppColors.bg2,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () {
+                    final w = double.tryParse(weightCtrl.text);
+                    if (w != null && w > 20 && w < 300) {
+                      final now = DateTime.now();
+                      final dateStr = '${now.year}-${now.month.toString().padLeft(2,'0')}-${now.day.toString().padLeft(2,'0')}';
+                      final bmi = BmiEngine.calculateBmi(w, state.profile!.heightCm);
+                      
+                      ref.read(appProvider.notifier).addWeightEntry(WeightEntry(
+                        date: dateStr, weight: w, bmi: bmi,
+                      ));
+                      Navigator.pop(ctx);
+                      
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text('Weight logged! Macros & targets updated automatically.'),
+                        backgroundColor: AppColors.green,
+                        behavior: SnackBarBehavior.floating,
+                      ));
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('Save & Update Profile', style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+                  )),
+                ),
+                const SizedBox(height: 24),
+                // Weight History
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Recent History', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white)),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final entries = ref.watch(appProvider).weightEntries.reversed.toList();
+                      if (entries.isEmpty) {
+                        return const Center(child: Text('No history yet.', style: TextStyle(color: AppColors.textMuted)));
+                      }
+                      return ListView.builder(
+                        itemCount: entries.length,
+                        itemBuilder: (ctx, i) {
+                          final e = entries[i];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(color: AppColors.bg2, borderRadius: BorderRadius.circular(12)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(e.date, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                Row(
+                                  children: [
+                                    Text('${e.weight.toStringAsFixed(1)} kg', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.white)),
+                                    const SizedBox(width: 12),
+                                    Text('BMI ${e.bmi.toStringAsFixed(1)}', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
