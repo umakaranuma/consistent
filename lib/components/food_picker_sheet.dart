@@ -24,7 +24,25 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
   String? _expandedId;
 
   List<FoodItem> get _filteredItems {
-    final items = FoodDatabase.getByCategory(widget.mealType);
+    final dbItems = FoodDatabase.getByCategory(widget.mealType);
+    // Add user-created custom foods
+    final customFoods = ref.read(appProvider.notifier).customFoods
+      .where((f) => f['category'] == widget.mealType || f['category'] == 'all')
+      .map((f) => FoodItem(
+        id: f['id'] as String,
+        name: f['name'] as String,
+        category: widget.mealType,
+        description: 'Custom food',
+        icon: f['icon'] as String? ?? '\u{1F37D}',
+        calories: (f['calories'] as num).toDouble(),
+        protein: (f['protein'] as num).toDouble(),
+        carbs: (f['carbs'] as num).toDouble(),
+        fat: (f['fat'] as num).toDouble(),
+        servingSize: f['servingSize'] as String? ?? '1 serving',
+        servingQty: f['servingQty'] as int? ?? 1,
+        unit: f['unit'] as String? ?? 'serving',
+      )).toList();
+    final items = [...customFoods, ...dbItems];
     if (_search.isEmpty) return items;
     final q = _search.toLowerCase();
     return items.where((i) =>
@@ -160,6 +178,9 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                   _sectionHeader('➕  Add more', AppColors.textSecondary),
                   const SizedBox(height: 8),
                 ],
+                // Create custom food button
+                if (_search.isEmpty)
+                  _buildCreateFoodButton(),
                 ..._filteredItems.map((food) => _buildFoodTile(food)),
                 const SizedBox(height: 40),
               ],
@@ -235,15 +256,210 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
     );
   }
 
+  Widget _buildCreateFoodButton() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: _showCreateFoodDialog,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.bg1,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 42, height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(Icons.add_rounded, color: AppColors.accent, size: 24),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Create Custom Food', style: TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.accent,
+                    )),
+                    SizedBox(height: 2),
+                    Text("Can't find your food? Add it here", style: TextStyle(
+                      fontSize: 11, color: AppColors.textSecondary,
+                    )),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateFoodDialog() {
+    final nameCtrl = TextEditingController();
+    final calCtrl = TextEditingController();
+    final protCtrl = TextEditingController(text: '0');
+    final carbCtrl = TextEditingController(text: '0');
+    final fatCtrl = TextEditingController(text: '0');
+    final sizeCtrl = TextEditingController(text: '1 serving');
+    String selectedCategory = widget.mealType;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDState) => AlertDialog(
+          backgroundColor: AppColors.bg2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.restaurant_outlined, color: AppColors.accent, size: 22),
+              SizedBox(width: 10),
+              Text('Create Custom Food', style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+              )),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _dialogField(nameCtrl, 'Food name', 'e.g. Masala Dosa', TextInputType.text),
+                const SizedBox(height: 10),
+                _dialogField(calCtrl, 'Calories (kcal)', 'e.g. 250', TextInputType.number),
+                const SizedBox(height: 10),
+                Row(children: [
+                  Expanded(child: _dialogField(protCtrl, 'Protein (g)', '0', TextInputType.number)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _dialogField(carbCtrl, 'Carbs (g)', '0', TextInputType.number)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _dialogField(fatCtrl, 'Fat (g)', '0', TextInputType.number)),
+                ]),
+                const SizedBox(height: 10),
+                _dialogField(sizeCtrl, 'Serving size', '1 plate', TextInputType.text),
+                const SizedBox(height: 12),
+                // Category selector
+                Row(
+                  children: [
+                    const Text('Available in: ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    const SizedBox(width: 6),
+                    DropdownButton<String>(
+                      value: selectedCategory,
+                      dropdownColor: AppColors.bg3,
+                      style: const TextStyle(fontSize: 13, color: AppColors.white),
+                      underline: Container(height: 1, color: AppColors.border2),
+                      items: const [
+                        DropdownMenuItem(value: 'breakfast', child: Text('Breakfast')),
+                        DropdownMenuItem(value: 'lunch', child: Text('Lunch')),
+                        DropdownMenuItem(value: 'dinner', child: Text('Dinner')),
+                        DropdownMenuItem(value: 'snack', child: Text('Snack')),
+                        DropdownMenuItem(value: 'all', child: Text('All meals')),
+                      ],
+                      onChanged: (v) => setDState(() => selectedCategory = v!),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameCtrl.text.trim();
+                final cal = double.tryParse(calCtrl.text);
+                if (name.isEmpty || cal == null || cal <= 0) return;
+
+                final food = {
+                  'id': 'custom_${DateTime.now().millisecondsSinceEpoch}',
+                  'name': name,
+                  'calories': cal,
+                  'protein': double.tryParse(protCtrl.text) ?? 0.0,
+                  'carbs': double.tryParse(carbCtrl.text) ?? 0.0,
+                  'fat': double.tryParse(fatCtrl.text) ?? 0.0,
+                  'servingSize': sizeCtrl.text.trim(),
+                  'servingQty': 1,
+                  'unit': 'serving',
+                  'icon': '\u{1F37D}',
+                  'category': selectedCategory,
+                };
+                ref.read(appProvider.notifier).addCustomFood(food);
+                setState(() {}); // refresh list
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('$name added to your food list!'),
+                  backgroundColor: AppColors.bg3,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Add Food', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _dialogField(TextEditingController ctrl, String label, String hint, TextInputType type) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: type,
+      style: const TextStyle(color: AppColors.white, fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        hintText: hint,
+        hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+        filled: true, fillColor: AppColors.bg3,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.accent)),
+      ),
+    );
+  }
+
+  /// Get effective calories per serving (user override or default)
+  double _effectiveCals(FoodItem food) {
+    final overrides = ref.read(appProvider.notifier).calorieOverrides;
+    return overrides[food.id] ?? food.calories;
+  }
+
+  double _effectiveCalsPerUnit(FoodItem food) {
+    return _effectiveCals(food) / food.servingQty;
+  }
+
+  bool _hasOverride(FoodItem food) {
+    return ref.read(appProvider.notifier).calorieOverrides.containsKey(food.id);
+  }
+
   Widget _buildFoodTile(FoodItem food) {
     final isExpanded = _expandedId == food.id;
-    final qty = _quantities[food.id] ?? food.servingQty; // Default to standard serving qty
+    final qty = _quantities[food.id] ?? food.servingQty;
+    final calPerUnit = _effectiveCalsPerUnit(food);
+    final isOverridden = _hasOverride(food);
 
-    // Per-unit calculations
-    final totalCal = (food.caloriesPerUnit * qty).toInt();
-    final totalP = (food.proteinPerUnit * qty).toInt();
-    final totalC = (food.carbsPerUnit * qty).toInt();
-    final totalF = (food.fatPerUnit * qty).toInt();
+    // Per-unit calculations (calories use override, macros keep ratio)
+    final calRatio = _effectiveCals(food) / food.calories;
+    final totalCal = (calPerUnit * qty).toInt();
+    final totalP = (food.proteinPerUnit * calRatio * qty).toInt();
+    final totalC = (food.carbsPerUnit * calRatio * qty).toInt();
+    final totalF = (food.fatPerUnit * calRatio * qty).toInt();
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -292,10 +508,25 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                           fontSize: 12, color: AppColors.textSecondary,
                         )),
                         const SizedBox(height: 4),
-                        // Per-unit calorie info
-                        Text(
-                          '${food.caloriesPerUnit.toInt()} kcal per ${food.unit}  ·  Standard: ${food.servingSize}',
-                          style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                        // Per-unit calorie info + edit button
+                        Row(
+                          children: [
+                            Text(
+                              '${calPerUnit.toInt()} kcal per ${food.unit}',
+                              style: TextStyle(fontSize: 10,
+                                color: isOverridden ? AppColors.amber : AppColors.textMuted,
+                                fontWeight: isOverridden ? FontWeight.w600 : FontWeight.normal),
+                            ),
+                            if (isOverridden)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: Icon(Icons.edit, size: 10, color: AppColors.amber),
+                              ),
+                            Text(
+                              '  ·  ${food.servingSize}',
+                              style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -355,7 +586,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(food.unit, style: const TextStyle(
+                    Text(food.unit, style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent,
                     )),
                   ],
@@ -376,7 +607,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                           const Icon(Icons.summarize_outlined, size: 14, color: AppColors.accent),
                           const SizedBox(width: 6),
                           Text(
-                            '$qty ${food.unit}${qty > 1 ? 's' : ''} of ${food.name}',
+                            '$qty ${food.unit}${qty > 1 ? 's' : ''} of ${food.name}${isOverridden ? ' (custom)' : ''}',
                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white),
                           ),
                         ],
@@ -395,6 +626,25 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                   ),
                 ),
                 const SizedBox(height: 14),
+                // Edit calories button
+                OutlinedButton.icon(
+                  onPressed: () => _showCalorieEditDialog(food),
+                  icon: Icon(Icons.edit_outlined, size: 16,
+                    color: isOverridden ? AppColors.amber : AppColors.textSecondary),
+                  label: Text(
+                    isOverridden
+                      ? 'Custom: ${_effectiveCals(food).toInt()} kcal/serving  (tap to edit)'
+                      : 'Edit calories for ${food.name}',
+                    style: TextStyle(fontSize: 12,
+                      color: isOverridden ? AppColors.amber : AppColors.textSecondary),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: (isOverridden ? AppColors.amber : AppColors.textMuted).withValues(alpha: 0.3)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
+                ),
+                const SizedBox(height: 10),
                 // Add button
                 SizedBox(
                   width: double.infinity,
@@ -449,12 +699,100 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
     );
   }
 
+  void _showCalorieEditDialog(FoodItem food) {
+    final currentCals = _effectiveCals(food);
+    final controller = TextEditingController(text: currentCals.toInt().toString());
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.bg2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Text(food.icon, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 10),
+            Expanded(child: Text(food.name, style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+            ))),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Calories per serving (${food.servingSize}):',
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            const SizedBox(height: 10),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              style: const TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                suffixText: 'kcal',
+                suffixStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+                filled: true,
+                fillColor: AppColors.bg3,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.border2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.accent),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text('Default: ${food.calories.toInt()} kcal',
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+            const Text('This change only affects new entries, not past logs.',
+              style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+          ],
+        ),
+        actions: [
+          if (_hasOverride(food))
+            TextButton(
+              onPressed: () {
+                ref.read(appProvider.notifier).removeCalorieOverride(food.id);
+                setState(() {});
+                Navigator.pop(ctx);
+              },
+              child: const Text('Reset', style: TextStyle(color: AppColors.red)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = double.tryParse(controller.text);
+              if (val != null && val > 0) {
+                ref.read(appProvider.notifier).setCalorieOverride(food.id, val);
+                setState(() {});
+              }
+              Navigator.pop(ctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _selectFood(FoodItem food, int qty) {
-    // Calculate per-unit * qty
-    final totalCal = food.caloriesPerUnit * qty;
-    final totalP = food.proteinPerUnit * qty;
-    final totalC = food.carbsPerUnit * qty;
-    final totalF = food.fatPerUnit * qty;
+    // Calculate per-unit * qty using effective (possibly overridden) calories
+    final calPerUnit = _effectiveCalsPerUnit(food);
+    final calRatio = _effectiveCals(food) / food.calories;
+    final totalCal = calPerUnit * qty;
+    final totalP = food.proteinPerUnit * calRatio * qty;
+    final totalC = food.carbsPerUnit * calRatio * qty;
+    final totalF = food.fatPerUnit * calRatio * qty;
 
     final item = ScheduleItem(
       id: const Uuid().v4(),

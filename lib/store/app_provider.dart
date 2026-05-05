@@ -96,6 +96,31 @@ class AppNotifier extends Notifier<AppState> {
     _saveState(state.copyWith(profile: profile));
   }
 
+  // ─── Food Calorie Overrides ─────────────────────────────
+  /// Get all user calorie overrides (foodId -> caloriesPerServing)
+  Map<String, double> get calorieOverrides {
+    final raw = _box.get('calorieOverrides');
+    if (raw == null) return {};
+    return Map<String, double>.from(raw as Map);
+  }
+
+  /// Set a calorie override for a food item.
+  /// [foodId] is the food database ID, [caloriesPerServing] is the
+  /// total calories for the full serving.  Past ScheduleItems are
+  /// NOT affected — only new additions will use this value.
+  void setCalorieOverride(String foodId, double caloriesPerServing) {
+    final overrides = calorieOverrides;
+    overrides[foodId] = caloriesPerServing;
+    _box.put('calorieOverrides', overrides);
+  }
+
+  /// Remove a calorie override (revert to database default)
+  void removeCalorieOverride(String foodId) {
+    final overrides = calorieOverrides;
+    overrides.remove(foodId);
+    _box.put('calorieOverrides', overrides);
+  }
+
   // ─── Water ───────────────────────────────────────────────
   void setWaterConfig(WaterConfig config) {
     _saveState(state.copyWith(waterConfig: config));
@@ -304,6 +329,151 @@ class AppNotifier extends Notifier<AppState> {
     final config = state.waterConfig;
     if (config == null || config.target == 0) return 0;
     return (config.consumed / config.target * 100).clamp(0, 100).round();
+  }
+
+  int get workoutScore {
+    final workouts = state.schedule.where((i) => i.type == ScheduleItemType.workout).toList();
+    if (workouts.isEmpty) return 0;
+    return (workouts.where((i) => i.done).length / workouts.length * 100).round();
+  }
+
+  // ─── Custom Foods ──────────────────────────────────────────
+  List<Map<String, dynamic>> get customFoods {
+    final raw = _box.get('customFoods');
+    if (raw == null) return [];
+    return List<Map<String, dynamic>>.from(
+      (raw as List).map((e) => Map<String, dynamic>.from(e as Map)),
+    );
+  }
+
+  void addCustomFood(Map<String, dynamic> food) {
+    final foods = customFoods..add(food);
+    _box.put('customFoods', foods);
+  }
+
+  void removeCustomFood(String id) {
+    final foods = customFoods..removeWhere((f) => f['id'] == id);
+    _box.put('customFoods', foods);
+  }
+
+  // ─── Health Insights ───────────────────────────────────────
+  List<Map<String, String>> get healthInsights {
+    final insights = <Map<String, String>>[];
+    final profile = state.profile;
+    if (profile == null) return insights;
+
+    final now = DateTime.now();
+    final hour = now.hour;
+    final targets = profile.macroTargets;
+
+    // ── Sleep Analysis ──
+    final sleepItem = state.schedule.firstWhere(
+      (i) => i.type == ScheduleItemType.sleep,
+      orElse: () => ScheduleItem(id: '', time: '23:00', title: '', sub: '', icon: '', type: ScheduleItemType.sleep, calories: 0, protein: 0, carbs: 0, fat: 0, done: false, remOn: false, isCustom: false),
+    );
+    if (sleepItem.id.isNotEmpty) {
+      final sleepHours = _parseSleepHours(sleepItem.sub);
+      if (sleepHours != null && sleepHours > 0) {
+        if (sleepHours < 4) {
+          insights.add({'type': 'critical', 'icon': '🚨', 'title': 'Critical sleep deficit!',
+            'msg': 'Only ${sleepHours.toStringAsFixed(1)}h sleep. Rest is top priority today. Avoid heavy workouts. Stay extra hydrated and add vitamin C foods.'});
+        } else if (sleepHours < 6) {
+          insights.add({'type': 'warning', 'icon': '😴', 'title': 'Low sleep today',
+            'msg': '${sleepHours.toStringAsFixed(1)}h is below ideal. Take a 20min power nap if possible. Keep workout light. Add magnesium-rich foods (nuts, banana).'});
+        } else if (sleepHours >= 8) {
+          insights.add({'type': 'good', 'icon': '✅', 'title': 'Great sleep!',
+            'msg': '${sleepHours.toStringAsFixed(1)}h — well rested! Perfect day for a challenging workout.'});
+        }
+      }
+    }
+
+    // ── Calorie Analysis ──
+    final calsEaten = caloriesEaten;
+    final calTarget = targets.calories;
+    final calPct = calTarget > 0 ? calsEaten / calTarget : 0.0;
+
+    if (hour >= 14 && calPct < 0.3 && calTarget > 0) {
+      insights.add({'type': 'warning', 'icon': '🍽️', 'title': 'Very low calorie intake',
+        'msg': 'Only ${calsEaten.toInt()} of ${calTarget.toInt()} kcal by afternoon. Your body needs fuel — have a protein-rich meal soon.'});
+    } else if (hour >= 12 && calPct < 0.4 && calTarget > 0) {
+      insights.add({'type': 'info', 'icon': '🥗', 'title': 'Behind on calories',
+        'msg': '${(calPct * 100).toInt()}% of target eaten. Consider a nutritious snack or a hearty lunch.'});
+    }
+    if (calPct > 1.2 && calTarget > 0) {
+      insights.add({'type': 'warning', 'icon': '⚠️', 'title': 'Over calorie budget',
+        'msg': '${(calPct * 100).toInt()}% of target consumed. Consider a light walk and keep remaining meals light.'});
+    }
+
+    // ── Protein Analysis ──
+    final protPct = targets.protein > 0 ? proteinEaten / targets.protein : 0.0;
+    if (hour >= 15 && protPct < 0.4 && targets.protein > 0) {
+      insights.add({'type': 'info', 'icon': '🥚', 'title': 'Protein is low',
+        'msg': 'Only ${proteinEaten.toInt()}g of ${targets.protein.toInt()}g target. Add eggs, chicken, or a protein shake to recover.'});
+    }
+
+    // ── Water Analysis ──
+    final wScore = waterScore;
+    if (hour >= 13 && wScore < 30) {
+      insights.add({'type': 'warning', 'icon': '💧', 'title': 'Dehydration risk',
+        'msg': 'Only $wScore% of water target. Drink 2 glasses now. Dehydration causes fatigue and headaches.'});
+    } else if (hour >= 16 && wScore < 50) {
+      insights.add({'type': 'info', 'icon': '🥤', 'title': 'Drink more water',
+        'msg': '$wScore% hydrated. Keep a water bottle nearby and sip regularly.'});
+    }
+
+    // ── Workout Analysis ──
+    final workoutDone = state.schedule.any((i) => i.type == ScheduleItemType.workout && i.done);
+    final hasWorkout = state.schedule.any((i) => i.type == ScheduleItemType.workout);
+    if (hasWorkout && !workoutDone && hour >= 18) {
+      final sleepHours = _parseSleepHours(sleepItem.sub);
+      if (sleepHours != null && sleepHours >= 6) {
+        insights.add({'type': 'info', 'icon': '💪', 'title': 'Workout pending',
+          'msg': "You had good sleep — don't skip today's workout! Even 20 mins helps."});
+      } else {
+        insights.add({'type': 'info', 'icon': '🚶', 'title': 'Light activity suggested',
+          'msg': 'Low sleep + pending workout. Try a 15-min walk instead of intense exercise.'});
+      }
+    }
+    if (workoutDone && calPct < 0.5) {
+      insights.add({'type': 'info', 'icon': '🍌', 'title': 'Post-workout fuel needed',
+        'msg': 'Workout done but calories are low. Have a protein-rich snack within 30 min for recovery.'});
+    }
+
+    // ── Meal Timing ──
+    final breakfastLogged = state.schedule.any((i) => i.isCustom && i.done && i.time == '07:30');
+    if (hour >= 10 && !breakfastLogged) {
+      insights.add({'type': 'info', 'icon': '🌅', 'title': 'No breakfast logged',
+        'msg': 'Skipping breakfast slows metabolism. Even a banana or oats helps kickstart your day.'});
+    }
+
+    // ── All Good ──
+    final totalItems = state.schedule.where((i) => !i.isCustom).length;
+    final doneItems = state.schedule.where((i) => !i.isCustom && i.done).length;
+    if (totalItems > 0 && doneItems == totalItems && wScore >= 80) {
+      insights.add({'type': 'good', 'icon': '🎉', 'title': 'Crushing it today!',
+        'msg': 'All tasks done, hydration on track. Keep this momentum going!'});
+    }
+
+    return insights;
+  }
+
+  double? _parseSleepHours(String sub) {
+    // Parse sub like "7h sleep" or "5.5h" or "11:00 PM - 6:30 AM" or "23:00 - 06:30"
+    final hMatch = RegExp(r'(\d+\.?\d*)\s*h').firstMatch(sub);
+    if (hMatch != null) return double.tryParse(hMatch.group(1)!);
+
+    // Try "HH:MM - HH:MM" format
+    final rangeMatch = RegExp(r'(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})').firstMatch(sub);
+    if (rangeMatch != null) {
+      final startH = int.parse(rangeMatch.group(1)!);
+      final startM = int.parse(rangeMatch.group(2)!);
+      final endH = int.parse(rangeMatch.group(3)!);
+      final endM = int.parse(rangeMatch.group(4)!);
+      var diff = (endH * 60 + endM) - (startH * 60 + startM);
+      if (diff < 0) diff += 24 * 60; // overnight
+      return diff / 60.0;
+    }
+    return null;
   }
 }
 

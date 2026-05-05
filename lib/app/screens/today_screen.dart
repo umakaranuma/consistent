@@ -7,11 +7,35 @@ import '../../utils/bmi_engine.dart';
 import '../../components/food_picker_sheet.dart';
 import 'bmi_details_screen.dart';
 
-class TodayScreen extends ConsumerWidget {
+class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TodayScreen> createState() => _TodayScreenState();
+}
+
+class _TodayScreenState extends ConsumerState<TodayScreen> {
+  // Which meal period is currently expanded (auto-set by time of day)
+  late String _expandedMeal;
+
+  @override
+  void initState() {
+    super.initState();
+    final hour = DateTime.now().hour;
+    if (hour < 10) {
+      _expandedMeal = 'breakfast';
+    } else if (hour < 14) {
+      _expandedMeal = 'lunch';
+    } else if (hour < 18) {
+      _expandedMeal = 'snack';
+    } else {
+      _expandedMeal = 'dinner';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final state = ref.watch(appProvider);
     final profile = state.profile;
 
@@ -37,32 +61,32 @@ class TodayScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  // ─── BMI Card ────────────
+                  // â”€â”€â”€ BMI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildBmiCard(context, profile, ref),
                   const SizedBox(height: 16),
-                  // ─── Score Row ───────────
+                  // â”€â”€â”€ Score Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildScoreRow(notifier, profile, state),
                   const SizedBox(height: 16),
-                  // ─── Calorie Card ────────
+                  // â”€â”€â”€ Calorie Card â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildCalorieCard(eaten, profile.macroTargets),
                   const SizedBox(height: 16),
-                  // ─── Macro Bars ──────────
+                  // â”€â”€â”€ Macro Bars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildMacroCard(pEaten, cEaten, fEaten, profile.macroTargets, profile.mode),
                   const SizedBox(height: 16),
-                  // ─── Water Card ──────────
+                  // â”€â”€â”€ Water Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   _buildWaterCard(context, state.waterConfig, ref),
                   const SizedBox(height: 16),
-                  // ─── Weekly Workout ──────
+                  // â”€â”€â”€ Weekly Workout â”€â”€â”€â”€â”€â”€
                   _buildWeeklyWorkoutRow(profile),
                   const SizedBox(height: 24),
-                  // ─── Log Food Buttons ────
+                  // â”€â”€â”€ Log Food Buttons â”€â”€â”€â”€
                   _buildLogFoodButtons(context),
+                  const SizedBox(height: 24),
+                  // â”€â”€â”€ Daily Plan (unified meals + schedule) â”€â”€
+                  _buildDailyPlan(context, state, ref),
                   const SizedBox(height: 20),
-                  // ─── Food Log (logged meals) ──
-                  _buildFoodLog(state, ref),
-                  const SizedBox(height: 28),
-                  // ─── Schedule Section ─────
-                  _buildScheduleSection(state, ref),
+                  // ─── Health Insights ──
+                  _buildHealthInsights(notifier),
                   const SizedBox(height: 100),
                 ],
               ),
@@ -73,7 +97,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── App Bar ──────────────────────────────────────────────
+  // â”€â”€â”€ App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildAppBar(UserProfile profile, int streak) {
     final hour = DateTime.now().hour;
     String greeting;
@@ -133,7 +157,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── BMI Card ─────────────────────────────────────────────
+  // â”€â”€â”€ BMI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildBmiCard(BuildContext context, UserProfile profile, WidgetRef ref) {
     final bmiColor = _bmiColor(profile.bmiCategory);
     final bmiLabel = BmiEngine.getBmiLabel(profile.bmiCategory);
@@ -183,7 +207,7 @@ class TodayScreen extends ConsumerWidget {
                     ),
                     child: const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Text('Detail ›', style: TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.bold)),
+                      child: Text('Detail â€º', style: TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -386,7 +410,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Score Row (Circular Progress Rings) ───────────────────
+  // â”€â”€â”€ Score Row (Circular Progress Rings) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildScoreRow(AppNotifier notifier, UserProfile profile, AppState state) {
     final dietScore = notifier.dietScore;
     final waterScore = notifier.waterScore;
@@ -398,7 +422,7 @@ class TodayScreen extends ConsumerWidget {
     final cards = <Widget>[
       _scoreCard('Diet', '$mealsDone/${meals.length}', dietScore / 100, AppColors.green, Icons.restaurant_outlined),
       _scoreCard('Water', '$waterScore%', waterScore / 100, AppColors.blue, Icons.water_drop_outlined),
-      _scoreCard('Workout', workoutDone ? '✓' : '—', workoutDone ? 1.0 : 0.0, AppColors.amber, Icons.fitness_center_outlined),
+      _scoreCard('Workout', workoutDone ? 'âœ“' : 'â€”', workoutDone ? 1.0 : 0.0, AppColors.amber, Icons.fitness_center_outlined),
     ];
 
     if (profile.mode == AppMode.gym) {
@@ -455,7 +479,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Calorie Card (Donut style) ───────────────────────────
+  // â”€â”€â”€ Calorie Card (Donut style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildCalorieCard(double eaten, MacroTargets targets) {
     final remaining = targets.calories - eaten;
     final overBudget = remaining < 0;
@@ -546,7 +570,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Macro Card (Visual bars with percentage) ─────────────
+  // â”€â”€â”€ Macro Card (Visual bars with percentage) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildMacroCard(double pEaten, double cEaten, double fEaten, MacroTargets t, AppMode mode) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -626,7 +650,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Water Card ───────────────────────────────────────────
+  // â”€â”€â”€ Water Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildWaterCard(BuildContext context, WaterConfig? config, WidgetRef ref) {
     final consumed = config?.consumed ?? 0.0;
     final target = config?.target ?? 2500.0;
@@ -780,7 +804,7 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Weekly Workout Row ───────────────────────────────────
+  // â”€â”€â”€ Weekly Workout Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildWeeklyWorkoutRow(UserProfile profile) {
     final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     List<String> plan;
@@ -842,12 +866,12 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Log Food Buttons (Gradient) ───────────────────────────
+  // â”€â”€â”€ Log Food Buttons (Gradient) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildLogFoodButtons(BuildContext context) {
     final meals = [
       {'icon': '🍳', 'label': 'Breakfast', 'key': 'breakfast', 'color': const Color(0xFF2E5A1A)},
       {'icon': '🍛', 'label': 'Lunch', 'key': 'lunch', 'color': const Color(0xFF5A3A1A)},
-      {'icon': '🍽️', 'label': 'Dinner', 'key': 'dinner', 'color': const Color(0xFF1A2E5A)},
+      {'icon': '🍽', 'label': 'Dinner', 'key': 'dinner', 'color': const Color(0xFF1A2E5A)},
       {'icon': '🥜', 'label': 'Snack', 'key': 'snack', 'color': const Color(0xFF3A1A5A)},
     ];
 
@@ -864,7 +888,7 @@ class TodayScreen extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 4),
-        const Text('Tap a meal to add foods — calories auto-tracked',
+        const Text('Tap a meal to add foods â€” calories auto-tracked',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         const SizedBox(height: 14),
         Row(
@@ -905,218 +929,91 @@ class TodayScreen extends ConsumerWidget {
     );
   }
 
-  // ─── Food Log (Logged meals displayed by category) ────────
-  Widget _buildFoodLog(AppState state, WidgetRef ref) {
-    // Logged food = custom schedule items that are done
-    final loggedItems = state.schedule.where((s) => s.isCustom && s.done).toList();
-    if (loggedItems.isEmpty) return const SizedBox.shrink();
-
-    // Group by meal time
-    final breakfast = loggedItems.where((i) => i.time == '07:30').toList();
-    final lunch = loggedItems.where((i) => i.time == '13:00').toList();
-    final dinner = loggedItems.where((i) => i.time == '20:00').toList();
-    final snack = loggedItems.where((i) => i.time == '16:00').toList();
-
-    final totalCals = loggedItems.fold(0.0, (s, i) => s + i.calories);
-    final totalProtein = loggedItems.fold(0.0, (s, i) => s + i.protein);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.bg1,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.border1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              const Icon(Icons.restaurant_menu, size: 18, color: AppColors.green),
-              const SizedBox(width: 8),
-              const Text("Today's Food Log", style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
-              )),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '${totalCals.toInt()} kcal · P:${totalProtein.toInt()}g',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          // Meal groups
-          if (breakfast.isNotEmpty)
-            _buildMealGroup('🍳', 'Breakfast', breakfast, ref),
-          if (lunch.isNotEmpty)
-            _buildMealGroup('🍛', 'Lunch', lunch, ref),
-          if (dinner.isNotEmpty)
-            _buildMealGroup('🍽️', 'Dinner', dinner, ref),
-          if (snack.isNotEmpty)
-            _buildMealGroup('🥜', 'Snacks', snack, ref),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMealGroup(String emoji, String label, List<ScheduleItem> items, WidgetRef ref) {
-    final groupCals = items.fold(0.0, (s, i) => s + i.calories);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 14)),
-            const SizedBox(width: 6),
-            Text(label, style: const TextStyle(
-              fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
-            )),
-            const Spacer(),
-            Text('${groupCals.toInt()} kcal', style: const TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary,
-            )),
-          ],
-        ),
-        const SizedBox(height: 6),
-        ...items.map((item) => _buildLoggedFoodItem(item, ref)),
-        const SizedBox(height: 10),
-      ],
-    );
-  }
-
-  Widget _buildLoggedFoodItem(ScheduleItem item, WidgetRef ref) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.bg2,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Text(item.icon, style: const TextStyle(fontSize: 16)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item.title, style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white,
-                )),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Text(item.sub, style: const TextStyle(
-                      fontSize: 11, color: AppColors.textMuted,
-                    )),
-                    const SizedBox(width: 8),
-                    Text('${item.calories.toInt()} kcal', style: const TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accentSoft,
-                    )),
-                    if (item.protein > 0) ...[
-                      const SizedBox(width: 6),
-                      Text('P:${item.protein.toInt()}g', style: const TextStyle(
-                        fontSize: 10, color: AppColors.lavender,
-                      )),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          InkWell(
-            onTap: () => ref.read(appProvider.notifier).deleteScheduleItem(item.id),
-            borderRadius: BorderRadius.circular(6),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(Icons.close, size: 16, color: AppColors.textMuted),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── Schedule Section (Timeline) ──────────────────────────
-  Widget _buildScheduleSection(AppState state, WidgetRef ref) {
+  // â”€â”€â”€ Daily Plan (Unified meal-period cards) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  Widget _buildDailyPlan(BuildContext context, AppState state, WidgetRef ref) {
     final schedule = state.schedule;
     final doneCount = schedule.where((i) => i.done).length;
     final totalCount = schedule.length;
     final pct = totalCount > 0 ? doneCount / totalCount : 0.0;
 
-    // Group items by time-of-day
-    final morning = schedule.where((i) => _timeToHour(i.time) < 12).toList();
-    final afternoon = schedule.where((i) => _timeToHour(i.time) >= 12 && _timeToHour(i.time) < 17).toList();
-    final evening = schedule.where((i) => _timeToHour(i.time) >= 17).toList();
+    // Define meal periods
+    final periods = [
+      _MealPeriod(key: 'breakfast', emoji: '🍳', label: 'Breakfast', time: '07:30',
+        color: const Color(0xFF2E5A1A), scheduleTypes: {ScheduleItemType.meal},
+        hourRange: [0, 10]),
+      _MealPeriod(key: 'lunch', emoji: '🍛', label: 'Lunch', time: '13:00',
+        color: const Color(0xFF5A3A1A), scheduleTypes: {ScheduleItemType.meal},
+        hourRange: [10, 14]),
+      _MealPeriod(key: 'snack', emoji: '🥜', label: 'Snacks', time: '16:00',
+        color: const Color(0xFF3A1A5A), scheduleTypes: {ScheduleItemType.snack, ScheduleItemType.protein},
+        hourRange: [14, 18]),
+      _MealPeriod(key: 'dinner', emoji: '🍽', label: 'Dinner', time: '20:00',
+        color: const Color(0xFF1A2E5A), scheduleTypes: {ScheduleItemType.meal},
+        hourRange: [18, 24]),
+    ];
+
+    // Non-meal activities (workout, water, walk, sleep)
+    final activityTypes = {ScheduleItemType.workout, ScheduleItemType.water,
+      ScheduleItemType.walk, ScheduleItemType.sleep, ScheduleItemType.custom};
+    final activities = schedule.where((i) => activityTypes.contains(i.type) && !i.isCustom).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header with progress
+        // Progress header
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.bg1,
-            borderRadius: BorderRadius.circular(20),
+            color: AppColors.bg1, borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.border1),
           ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.schedule_rounded, size: 20, color: AppColors.accent),
-                  const SizedBox(width: 10),
-                  const Text('Daily Schedule', style: TextStyle(
-                    fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.white,
-                  )),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: pct >= 1.0 ? AppColors.green.withOpacity(0.15) : AppColors.accent.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '$doneCount / $totalCount done',
-                      style: TextStyle(
-                        fontSize: 12, fontWeight: FontWeight.w700,
-                        color: pct >= 1.0 ? AppColors.green : AppColors.accent,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: pct,
-                  minHeight: 6,
-                  backgroundColor: AppColors.bg3,
-                  valueColor: AlwaysStoppedAnimation(
-                    pct >= 1.0 ? AppColors.green : AppColors.accent,
-                  ),
+          child: Column(children: [
+            Row(children: [
+              const Icon(Icons.today_rounded, size: 20, color: AppColors.accent),
+              const SizedBox(width: 10),
+              const Text('Daily Plan', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.white)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: (pct >= 1.0 ? AppColors.green : AppColors.accent).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(20),
                 ),
+                child: Text('$doneCount / $totalCount done',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                    color: pct >= 1.0 ? AppColors.green : AppColors.accent)),
               ),
-            ],
-          ),
+            ]),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(value: pct, minHeight: 6,
+                backgroundColor: AppColors.bg3,
+                valueColor: AlwaysStoppedAnimation(pct >= 1.0 ? AppColors.green : AppColors.accent)),
+            ),
+          ]),
         ),
-        const SizedBox(height: 16),
-        // Time-of-day groups
-        if (morning.isNotEmpty)
-          _buildTimeGroup('🌅  Morning', morning, ref),
-        if (afternoon.isNotEmpty)
-          _buildTimeGroup('☀️  Afternoon', afternoon, ref),
-        if (evening.isNotEmpty)
-          _buildTimeGroup('🌙  Evening', evening, ref),
+        const SizedBox(height: 14),
+        // Meal period cards
+        ...periods.map((p) {
+          final planItems = schedule.where((i) =>
+            !i.isCustom && p.scheduleTypes.contains(i.type) &&
+            _timeToHour(i.time) >= p.hourRange[0] && _timeToHour(i.time) < p.hourRange[1]
+          ).toList();
+          final loggedItems = schedule.where((i) =>
+            i.isCustom && i.done && i.time == p.time
+          ).toList();
+          return _buildMealCard(context, p, planItems, loggedItems, ref);
+        }),
+        // Activities section
+        if (activities.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: Text('💪  Activities', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+          ),
+          ...activities.map((item) => _buildActivityItem(item, ref)),
+        ],
       ],
     );
   }
@@ -1126,145 +1023,564 @@ class TodayScreen extends ConsumerWidget {
     return int.tryParse(parts[0]) ?? 12;
   }
 
-  Widget _buildTimeGroup(String label, List<ScheduleItem> items, WidgetRef ref) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10, top: 4),
-          child: Text(label, style: const TextStyle(
-            fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textSecondary,
-          )),
-        ),
-        ...items.map((item) => _buildScheduleItem(item, ref)),
-        const SizedBox(height: 8),
-      ],
-    );
-  }
+  Widget _buildMealCard(BuildContext context, _MealPeriod period,
+      List<ScheduleItem> planItems, List<ScheduleItem> loggedItems, WidgetRef ref) {
+    final isExpanded = _expandedMeal == period.key;
+    final totalCals = loggedItems.fold(0.0, (s, i) => s + i.calories);
+    final totalProtein = loggedItems.fold(0.0, (s, i) => s + i.protein);
+    final planDone = planItems.where((i) => i.done).length;
+    final hasLogged = loggedItems.isNotEmpty;
 
-  // ─── Schedule Item (Timeline style) ───────────────────────
-  Widget _buildScheduleItem(ScheduleItem item, WidgetRef ref) {
-    final typeColor = _getAccentForType(item.type);
-    final hasMacros = item.calories > 0 || item.protein > 0;
-
-    return GestureDetector(
-      onTap: () => ref.read(appProvider.notifier).toggleScheduleItem(item.id),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: item.done ? AppColors.bg1.withOpacity(0.5) : AppColors.bg1,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: item.done ? AppColors.green.withOpacity(0.2) : AppColors.border1,
-          ),
-        ),
-        child: Row(
-          children: [
-            // Timeline dot + time
-            Column(
-              children: [
-                Container(
-                  width: 10, height: 10,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: item.done ? AppColors.green : typeColor.withOpacity(0.5),
-                    border: Border.all(
-                      color: item.done ? AppColors.green : typeColor, width: 2,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(item.time, style: TextStyle(
-                  fontSize: 10, fontWeight: FontWeight.w600,
-                  color: item.done ? AppColors.textMuted : AppColors.textSecondary,
-                )),
-              ],
-            ),
-            const SizedBox(width: 12),
-            // Icon
-            Container(
-              width: 42, height: 42,
-              decoration: BoxDecoration(
-                color: _getColorForType(item.type).withOpacity(item.done ? 0.15 : 0.4),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              alignment: Alignment.center,
-              child: Text(item.icon, style: TextStyle(fontSize: 20,
-                color: item.done ? Colors.white54 : null)),
-            ),
-            const SizedBox(width: 12),
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: isExpanded ? period.color.withOpacity(0.5) : AppColors.border1),
+      ),
+      child: Column(
+        children: [
+          // â”€â”€â”€ Header (tap to expand/collapse) â”€â”€â”€
+          InkWell(
+            onTap: () => setState(() => _expandedMeal = isExpanded ? '' : period.key),
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
                 children: [
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w700,
-                      color: item.done ? AppColors.textMuted : AppColors.white,
-                      decoration: item.done ? TextDecoration.lineThrough : null,
-                      decorationColor: AppColors.textMuted,
+                  // Meal emoji in colored circle
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: period.color.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(14),
                     ),
+                    alignment: Alignment.center,
+                    child: Text(period.emoji, style: const TextStyle(fontSize: 22)),
                   ),
-                  const SizedBox(height: 3),
-                  Text(item.sub, style: TextStyle(
-                    fontSize: 11,
-                    color: item.done ? AppColors.textMuted : AppColors.textSecondary,
-                  )),
-                  if (hasMacros && !item.done) ...[
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
+                  const SizedBox(width: 14),
+                  // Name + stats
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _schedMacroChip('${item.calories.toInt()} kcal', AppColors.accent),
-                        if (item.protein > 0)
-                          _schedMacroChip('P: ${item.protein.toInt()}g', AppColors.lavender),
-                        if (item.carbs > 0)
-                          _schedMacroChip('C: ${item.carbs.toInt()}g', AppColors.amber),
-                        if (item.fat > 0)
-                          _schedMacroChip('F: ${item.fat.toInt()}g', AppColors.teal),
+                        Text(period.label, style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+                        )),
+                        const SizedBox(height: 3),
+                        Row(children: [
+                          Text(period.time, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                          if (planItems.isNotEmpty) ...[
+                            const SizedBox(width: 8),
+                            Text('$planDone/${planItems.length} tasks', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                          ],
+                          if (hasLogged) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: AppColors.green.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text('${totalCals.toInt()} kcal', style: const TextStyle(
+                                fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.green,
+                              )),
+                            ),
+                          ],
+                        ]),
                       ],
                     ),
-                  ],
+                  ),
+                  // Arrow
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0.0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.keyboard_arrow_down, color: AppColors.textSecondary, size: 24),
+                  ),
                 ],
               ),
             ),
-            // Done indicator
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 28, height: 28,
+          ),
+          // â”€â”€â”€ Expanded content â”€â”€â”€
+          if (isExpanded) ...[
+            Divider(height: 1, color: period.color.withOpacity(0.15)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Logged food items
+                  if (hasLogged) ...[
+                    Row(children: [
+                      const Icon(Icons.check_circle, size: 14, color: AppColors.green),
+                      const SizedBox(width: 6),
+                      Text('Food eaten', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.green)),
+                      const Spacer(),
+                      Text('${totalCals.toInt()} kcal Â· P:${totalProtein.toInt()}g',
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                    ]),
+                    const SizedBox(height: 8),
+                    ...loggedItems.map((item) => _buildLoggedFoodRow(item, ref)),
+                    const SizedBox(height: 12),
+                  ],
+                  // Plan items (schedule tasks for this meal period)
+                  if (planItems.isNotEmpty) ...[
+                    Row(children: [
+                      Icon(Icons.list_alt_rounded, size: 14, color: AppColors.accent.withOpacity(0.7)),
+                      const SizedBox(width: 6),
+                      const Text('Planned', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+                    ]),
+                    const SizedBox(height: 8),
+                    ...planItems.map((item) => _buildPlanRow(item, ref)),
+                  ],
+                  // Add food button
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => showFoodPicker(context, period.key == 'snack' ? 'snack' : period.key),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text('Add ${period.label}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.accent,
+                        side: BorderSide(color: AppColors.accent.withOpacity(0.3)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoggedFoodRow(ScheduleItem item, WidgetRef ref) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.bg2, borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Text(item.icon, style: const TextStyle(fontSize: 18)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
+              const SizedBox(height: 3),
+              Wrap(spacing: 6, children: [
+                Text(item.sub, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                _chipSmall('${item.calories.toInt()} kcal', AppColors.accent),
+                if (item.protein > 0) _chipSmall('P:${item.protein.toInt()}g', AppColors.lavender),
+                if (item.carbs > 0) _chipSmall('C:${item.carbs.toInt()}g', AppColors.amber),
+              ]),
+            ],
+          )),
+          InkWell(
+            onTap: () => ref.read(appProvider.notifier).deleteScheduleItem(item.id),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(color: AppColors.red.withOpacity(0.08), borderRadius: BorderRadius.circular(8)),
+              child: const Icon(Icons.close, size: 14, color: AppColors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlanRow(ScheduleItem item, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () => ref.read(appProvider.notifier).toggleScheduleItem(item.id),
+      onLongPress: () => _showEditScheduleDialog(item, ref),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: item.done ? AppColors.bg2.withOpacity(0.5) : AppColors.bg2,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 22, height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: item.done ? AppColors.green.withOpacity(0.15) : Colors.transparent,
-                border: Border.all(
-                  color: item.done ? AppColors.green : AppColors.textMuted.withOpacity(0.5),
-                  width: 2,
-                ),
+                border: Border.all(color: item.done ? AppColors.green : AppColors.textMuted.withOpacity(0.4), width: 2),
               ),
-              child: item.done
-                ? const Icon(Icons.check_rounded, size: 16, color: AppColors.green)
-                : null,
+              child: item.done ? const Icon(Icons.check, size: 13, color: AppColors.green) : null,
             ),
+            const SizedBox(width: 10),
+            Text(item.icon, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 8),
+            Expanded(child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.title, style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600,
+                  color: item.done ? AppColors.textMuted : AppColors.white,
+                  decoration: item.done ? TextDecoration.lineThrough : null,
+                  decorationColor: AppColors.textMuted,
+                )),
+                if (item.sub.isNotEmpty)
+                  Text('${item.time} Â· ${item.sub}', style: TextStyle(
+                    fontSize: 10, color: item.done ? AppColors.textMuted : AppColors.textSecondary,
+                  )),
+              ],
+            )),
+            if (item.calories > 0 && !item.done)
+              _chipSmall('${item.calories.toInt()} kcal', AppColors.accentSoft),
           ],
         ),
       ),
     );
   }
 
-  Widget _schedMacroChip(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(6),
+  Widget _buildActivityItem(ScheduleItem item, WidgetRef ref) {
+    return GestureDetector(
+      onTap: () => ref.read(appProvider.notifier).toggleScheduleItem(item.id),
+      onLongPress: () => _showEditScheduleDialog(item, ref),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: item.done ? AppColors.bg1.withOpacity(0.5) : AppColors.bg1,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: item.done ? AppColors.green.withOpacity(0.2) : AppColors.border1),
+        ),
+        child: Row(children: [
+          Container(
+            width: 40, height: 40,
+            decoration: BoxDecoration(
+              color: _getColorForType(item.type).withOpacity(item.done ? 0.15 : 0.4),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Text(item.icon, style: const TextStyle(fontSize: 18)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(item.title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
+                color: item.done ? AppColors.textMuted : AppColors.white,
+                decoration: item.done ? TextDecoration.lineThrough : null, decorationColor: AppColors.textMuted)),
+              Text('${item.time} Â· ${item.sub}', style: TextStyle(fontSize: 11,
+                color: item.done ? AppColors.textMuted : AppColors.textSecondary)),
+            ],
+          )),
+          Container(
+            width: 28, height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: item.done ? AppColors.green.withOpacity(0.15) : Colors.transparent,
+              border: Border.all(color: item.done ? AppColors.green : AppColors.textMuted.withOpacity(0.5), width: 2),
+            ),
+            child: item.done ? const Icon(Icons.check_rounded, size: 16, color: AppColors.green) : null,
+          ),
+        ]),
       ),
-      child: Text(text, style: TextStyle(
-        fontSize: 10, fontWeight: FontWeight.w600, color: color,
-      )),
+    );
+  }
+
+  // ─── Edit Schedule Item Dialog ─────────────────────────────
+  void _showEditScheduleDialog(ScheduleItem item, WidgetRef ref) {
+    final isSleep = item.type == ScheduleItemType.sleep;
+    final titleCtrl = TextEditingController(text: item.title);
+    final subCtrl = TextEditingController(text: item.sub);
+    final timeCtrl = TextEditingController(text: item.time);
+
+    // For sleep: parse start/end times
+    String sleepStart = '23:00';
+    String sleepEnd = '06:00';
+    if (isSleep) {
+      final rangeMatch = RegExp(r'(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})').firstMatch(item.sub);
+      if (rangeMatch != null) {
+        sleepStart = rangeMatch.group(1)!;
+        sleepEnd = rangeMatch.group(2)!;
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDState) {
+          // Calculate sleep hours for display
+          double? sleepHours;
+          if (isSleep) {
+            final sp = sleepStart.split(':');
+            final ep = sleepEnd.split(':');
+            if (sp.length == 2 && ep.length == 2) {
+              final sMin = int.parse(sp[0]) * 60 + int.parse(sp[1]);
+              final eMin = int.parse(ep[0]) * 60 + int.parse(ep[1]);
+              var diff = eMin - sMin;
+              if (diff < 0) diff += 24 * 60;
+              sleepHours = diff / 60.0;
+            }
+          }
+
+          return AlertDialog(
+            backgroundColor: AppColors.bg2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Row(children: [
+              Text(item.icon, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Text('Edit ${item.title}', style: const TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+              )),
+            ]),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  TextField(
+                    controller: titleCtrl,
+                    style: const TextStyle(color: AppColors.white, fontSize: 14),
+                    decoration: _editDecor('Title'),
+                  ),
+                  const SizedBox(height: 10),
+
+                  if (isSleep) ...[
+                    // Sleep start/end time pickers
+                    const Text('Sleep time range:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Expanded(child: InkWell(
+                        onTap: () async {
+                          final parts = sleepStart.split(':');
+                          final t = await showTimePicker(context: context,
+                            initialTime: TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])));
+                          if (t != null) {
+                            setDState(() => sleepStart = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}');
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
+                          child: Column(children: [
+                            const Text('Bedtime', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                            Text(sleepStart, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+                          ]),
+                        ),
+                      )),
+                      const Padding(padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(Icons.arrow_forward, size: 18, color: AppColors.textMuted)),
+                      Expanded(child: InkWell(
+                        onTap: () async {
+                          final parts = sleepEnd.split(':');
+                          final t = await showTimePicker(context: context,
+                            initialTime: TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1])));
+                          if (t != null) {
+                            setDState(() => sleepEnd = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}');
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
+                          child: Column(children: [
+                            const Text('Wake up', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                            Text(sleepEnd, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+                          ]),
+                        ),
+                      )),
+                    ]),
+                    const SizedBox(height: 8),
+                    if (sleepHours != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: sleepHours < 6 ? AppColors.red.withOpacity(0.1) : AppColors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(children: [
+                          Icon(sleepHours < 6 ? Icons.warning_amber : Icons.check_circle,
+                            size: 16, color: sleepHours < 6 ? AppColors.red : AppColors.green),
+                          const SizedBox(width: 8),
+                          Text(
+                            sleepHours < 4
+                              ? '${sleepHours.toStringAsFixed(1)}h — Critical! Rest is priority today'
+                              : sleepHours < 6
+                                ? '${sleepHours.toStringAsFixed(1)}h — Below ideal (aim for 7-8h)'
+                                : '${sleepHours.toStringAsFixed(1)}h — Good sleep duration',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
+                              color: sleepHours < 6 ? AppColors.red : AppColors.green),
+                          ),
+                        ]),
+                      ),
+                    ],
+                  ] else ...[
+                    // Regular time + description editing
+                    Row(children: [
+                      SizedBox(width: 100, child: TextField(
+                        controller: timeCtrl,
+                        style: const TextStyle(color: AppColors.white, fontSize: 14),
+                        decoration: _editDecor('Time (HH:MM)'),
+                      )),
+                      const SizedBox(width: 10),
+                      Expanded(child: InkWell(
+                        onTap: () async {
+                          final parts = timeCtrl.text.split(':');
+                          final h = int.tryParse(parts[0]) ?? 12;
+                          final m = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
+                          final t = await showTimePicker(context: context, initialTime: TimeOfDay(hour: h, minute: m));
+                          if (t != null) {
+                            timeCtrl.text = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
+                          child: const Row(children: [
+                            Icon(Icons.access_time, size: 16, color: AppColors.accent),
+                            SizedBox(width: 6),
+                            Text('Pick time', style: TextStyle(fontSize: 12, color: AppColors.accent)),
+                          ]),
+                        ),
+                      )),
+                    ]),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: subCtrl,
+                      style: const TextStyle(color: AppColors.white, fontSize: 14),
+                      decoration: _editDecor('Description'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  ref.read(appProvider.notifier).deleteScheduleItem(item.id);
+                  Navigator.pop(ctx);
+                },
+                child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final updated = item.copyWith(
+                    title: titleCtrl.text.trim(),
+                    time: isSleep ? sleepStart : timeCtrl.text.trim(),
+                    sub: isSleep ? '$sleepStart - $sleepEnd (${((sleepHours ?? 0)).toStringAsFixed(1)}h)' : subCtrl.text.trim(),
+                  );
+                  ref.read(appProvider.notifier).updateScheduleItem(item.id, updated);
+                  Navigator.pop(ctx);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  InputDecoration _editDecor(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+      filled: true, fillColor: AppColors.bg3,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.accent)),
+    );
+  }
+
+  // ─── Health Insights Card ──────────────────────────────────
+  Widget _buildHealthInsights(AppNotifier notifier) {
+    final insights = notifier.healthInsights;
+    if (insights.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(children: [
+            Icon(Icons.lightbulb_outline, size: 18, color: AppColors.amber),
+            SizedBox(width: 8),
+            Text("Today's Insights", style: TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+            )),
+          ]),
+          const SizedBox(height: 12),
+          ...insights.map((i) => _buildInsightTile(i)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInsightTile(Map<String, String> insight) {
+    final type = insight['type'] ?? 'info';
+    Color bgColor;
+    Color borderColor;
+    switch (type) {
+      case 'critical': bgColor = AppColors.red.withOpacity(0.08); borderColor = AppColors.red.withOpacity(0.3); break;
+      case 'warning': bgColor = AppColors.amber.withOpacity(0.08); borderColor = AppColors.amber.withOpacity(0.3); break;
+      case 'good': bgColor = AppColors.green.withOpacity(0.08); borderColor = AppColors.green.withOpacity(0.3); break;
+      default: bgColor = AppColors.accent.withOpacity(0.06); borderColor = AppColors.accent.withOpacity(0.2); break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(insight['icon'] ?? '\u{1F4A1}', style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: 10),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(insight['title'] ?? '', style: const TextStyle(
+                fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.white,
+              )),
+              const SizedBox(height: 3),
+              Text(insight['msg'] ?? '', style: const TextStyle(
+                fontSize: 11, height: 1.4, color: AppColors.textSecondary,
+              )),
+            ],
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _chipSmall(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(5)),
+      child: Text(text, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
     );
   }
 
@@ -1289,17 +1605,22 @@ class TodayScreen extends ConsumerWidget {
       default: return AppColors.iconCustom;
     }
   }
-
-  Color _getAccentForType(ScheduleItemType type) {
-    switch (type) {
-      case ScheduleItemType.meal: return AppColors.green;
-      case ScheduleItemType.snack: return AppColors.amber;
-      case ScheduleItemType.workout: return AppColors.red;
-      case ScheduleItemType.water: return AppColors.blue;
-      case ScheduleItemType.sleep: return AppColors.lavender;
-      case ScheduleItemType.walk: return AppColors.teal;
-      case ScheduleItemType.protein: return AppColors.blue;
-      default: return AppColors.accent;
-    }
-  }
 }
+
+/// Helper class for meal period definitions
+class _MealPeriod {
+  final String key;
+  final String emoji;
+  final String label;
+  final String time;
+  final Color color;
+  final Set<ScheduleItemType> scheduleTypes;
+  final List<int> hourRange; // [start, end) hours
+
+  const _MealPeriod({
+    required this.key, required this.emoji, required this.label,
+    required this.time, required this.color, required this.scheduleTypes,
+    required this.hourRange,
+  });
+}
+
