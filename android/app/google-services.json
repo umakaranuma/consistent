@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "735803474789",
+    "project_id": "consistent-d569a",
+    "storage_bucket": "consistent-d569a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735803474789:android:dca15927beea51f760978c",
+        "android_client_info": {
+          "package_name": "com.example.consistent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4a4E-N1RMucGAmnpGN_WXcYSzGgEvAO8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
