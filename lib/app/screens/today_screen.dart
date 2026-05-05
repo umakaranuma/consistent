@@ -57,6 +57,9 @@ class TodayScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   // ─── Log Food Buttons ────
                   _buildLogFoodButtons(context),
+                  const SizedBox(height: 20),
+                  // ─── Food Log (logged meals) ──
+                  _buildFoodLog(state, ref),
                   const SizedBox(height: 28),
                   // ─── Schedule Section ─────
                   _buildScheduleSection(state, ref),
@@ -899,6 +902,146 @@ class TodayScreen extends ConsumerWidget {
           )).toList(),
         ),
       ],
+    );
+  }
+
+  // ─── Food Log (Logged meals displayed by category) ────────
+  Widget _buildFoodLog(AppState state, WidgetRef ref) {
+    // Logged food = custom schedule items that are done
+    final loggedItems = state.schedule.where((s) => s.isCustom && s.done).toList();
+    if (loggedItems.isEmpty) return const SizedBox.shrink();
+
+    // Group by meal time
+    final breakfast = loggedItems.where((i) => i.time == '07:30').toList();
+    final lunch = loggedItems.where((i) => i.time == '13:00').toList();
+    final dinner = loggedItems.where((i) => i.time == '20:00').toList();
+    final snack = loggedItems.where((i) => i.time == '16:00').toList();
+
+    final totalCals = loggedItems.fold(0.0, (s, i) => s + i.calories);
+    final totalProtein = loggedItems.fold(0.0, (s, i) => s + i.protein);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.border1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              const Icon(Icons.restaurant_menu, size: 18, color: AppColors.green),
+              const SizedBox(width: 8),
+              const Text("Today's Food Log", style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
+              )),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${totalCals.toInt()} kcal · P:${totalProtein.toInt()}g',
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.accent),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Meal groups
+          if (breakfast.isNotEmpty)
+            _buildMealGroup('🍳', 'Breakfast', breakfast, ref),
+          if (lunch.isNotEmpty)
+            _buildMealGroup('🍛', 'Lunch', lunch, ref),
+          if (dinner.isNotEmpty)
+            _buildMealGroup('🍽️', 'Dinner', dinner, ref),
+          if (snack.isNotEmpty)
+            _buildMealGroup('🥜', 'Snacks', snack, ref),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMealGroup(String emoji, String label, List<ScheduleItem> items, WidgetRef ref) {
+    final groupCals = items.fold(0.0, (s, i) => s + i.calories);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 14)),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary,
+            )),
+            const Spacer(),
+            Text('${groupCals.toInt()} kcal', style: const TextStyle(
+              fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary,
+            )),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ...items.map((item) => _buildLoggedFoodItem(item, ref)),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildLoggedFoodItem(ScheduleItem item, WidgetRef ref) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.bg2,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Text(item.icon, style: const TextStyle(fontSize: 16)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.title, style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white,
+                )),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Text(item.sub, style: const TextStyle(
+                      fontSize: 11, color: AppColors.textMuted,
+                    )),
+                    const SizedBox(width: 8),
+                    Text('${item.calories.toInt()} kcal', style: const TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accentSoft,
+                    )),
+                    if (item.protein > 0) ...[
+                      const SizedBox(width: 6),
+                      Text('P:${item.protein.toInt()}g', style: const TextStyle(
+                        fontSize: 10, color: AppColors.lavender,
+                      )),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+          InkWell(
+            onTap: () => ref.read(appProvider.notifier).deleteScheduleItem(item.id),
+            borderRadius: BorderRadius.circular(6),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.close, size: 16, color: AppColors.textMuted),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

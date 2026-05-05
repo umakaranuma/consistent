@@ -336,18 +336,23 @@ class DayRecord {
   });
 }
 
-/// A food item from the local food database
+/// A food item from the local food database.
+/// [calories], [protein], [carbs], [fat] are for the FULL serving
+/// ([servingQty] × [unit]).  The picker divides by [servingQty] to get
+/// per-unit values so the user can choose individual pieces.
 class FoodItem {
   final String id;
   final String name;
   final String category; // 'breakfast', 'lunch', 'dinner', 'snack'
   final String description;
   final String icon;
-  final double calories;
-  final double protein;
-  final double carbs;
-  final double fat;
+  final double calories;  // per full serving
+  final double protein;   // per full serving
+  final double carbs;     // per full serving
+  final double fat;       // per full serving
   final String servingSize;
+  final int servingQty;   // e.g. 2 for "2 pieces"
+  final String unit;      // e.g. "pc", "bowl", "plate"
 
   const FoodItem({
     required this.id,
@@ -360,5 +365,13 @@ class FoodItem {
     required this.carbs,
     required this.fat,
     required this.servingSize,
+    this.servingQty = 1,
+    this.unit = 'serving',
   });
+
+  /// Calories for a single unit (e.g. 1 thosai)
+  double get caloriesPerUnit => calories / servingQty;
+  double get proteinPerUnit  => protein / servingQty;
+  double get carbsPerUnit    => carbs / servingQty;
+  double get fatPerUnit      => fat / servingQty;
 }
