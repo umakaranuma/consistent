@@ -2,6 +2,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'types.dart';
 import '../utils/bmi_engine.dart';
+import '../utils/notification_service.dart';
 
 class AppState {
   final UserProfile? profile;
@@ -124,6 +125,14 @@ class AppNotifier extends Notifier<AppState> {
   // ─── Water ───────────────────────────────────────────────
   void setWaterConfig(WaterConfig config) {
     _saveState(state.copyWith(waterConfig: config));
+    // Sync water notifications
+    NotificationService.instance.syncWaterReminders(
+      enabled: config.reminderEnabled,
+      intervalMinutes: config.reminderIntervalMinutes.toInt(),
+      startTime: config.reminderStartTime,
+      endTime: config.reminderEndTime,
+      mlPerReminder: config.mlPerReminder.toInt(),
+    );
   }
 
   void addWater(double ml) {
@@ -280,10 +289,12 @@ class AppNotifier extends Notifier<AppState> {
   // ─── Reminders ───────────────────────────────────────────
   void setReminders(List<Reminder> reminders) {
     _saveState(state.copyWith(reminders: reminders));
+    _syncNotifications();
   }
 
   void addReminder(Reminder reminder) {
     _saveState(state.copyWith(reminders: [...state.reminders, reminder]));
+    _syncNotifications();
   }
 
   void toggleReminder(String id) {
@@ -298,12 +309,18 @@ class AppNotifier extends Notifier<AppState> {
       return r;
     }).toList();
     _saveState(state.copyWith(reminders: reminders));
+    _syncNotifications();
   }
 
   void deleteReminder(String id) {
     _saveState(state.copyWith(
       reminders: state.reminders.where((r) => r.id != id).toList(),
     ));
+    _syncNotifications();
+  }
+
+  void _syncNotifications() {
+    NotificationService.instance.syncReminders(state.reminders);
   }
 
   // ─── Computed Helpers ────────────────────────────────────

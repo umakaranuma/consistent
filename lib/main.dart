@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'app/router.dart';
 import 'constants/colors.dart';
 import 'store/types.dart';
+import 'utils/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,9 @@ void main() async {
   Hive.registerAdapter(DayRecordAdapter());
 
   await Hive.openBox('vitatrack_data');
+
+  // Initialize notifications
+  await NotificationService.instance.initialize();
 
   runApp(
     const ProviderScope(

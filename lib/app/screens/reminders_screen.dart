@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import '../../constants/colors.dart';
 import '../../store/app_provider.dart';
 import '../../store/types.dart';
+import '../../utils/notification_service.dart';
 
 class RemindersScreen extends ConsumerStatefulWidget {
   const RemindersScreen({Key? key}) : super(key: key);
@@ -237,7 +238,20 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
             ),
             Switch(
               value: r.enabled,
-              onChanged: (_) => ref.read(appProvider.notifier).toggleReminder(r.id),
+              onChanged: (_) async {
+                // Request permission when enabling
+                if (!r.enabled) {
+                  final granted = await NotificationService.instance.requestPermission();
+                  if (!granted && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Please allow notifications for reminders to work'),
+                      backgroundColor: AppColors.red,
+                    ));
+                    return;
+                  }
+                }
+                ref.read(appProvider.notifier).toggleReminder(r.id);
+              },
               activeColor: AppColors.accent,
             ),
           ],

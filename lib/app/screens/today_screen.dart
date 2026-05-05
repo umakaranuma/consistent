@@ -4,7 +4,9 @@ import '../../constants/colors.dart';
 import '../../store/app_provider.dart';
 import '../../store/types.dart';
 import '../../utils/bmi_engine.dart';
+import '../../utils/notification_service.dart';
 import '../../components/food_picker_sheet.dart';
+import 'package:uuid/uuid.dart';
 import 'bmi_details_screen.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
@@ -1006,14 +1008,48 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           return _buildMealCard(context, p, planItems, loggedItems, ref);
         }),
         // Activities section
-        if (activities.isNotEmpty) ...[
-          const SizedBox(height: 6),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 10),
-            child: Text('💪  Activities', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+        const SizedBox(height: 6),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Row(children: [
+            const Text('\u{1F4AA}  Activities', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+            const Spacer(),
+            InkWell(
+              onTap: () => _showAddActivityDialog(ref),
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 14, color: AppColors.accent),
+                    SizedBox(width: 4),
+                    Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.accent)),
+                  ],
+                ),
+              ),
+            ),
+          ]),
+        ),
+        if (activities.isNotEmpty)
+          ...activities.map((item) => _buildActivityItem(item, ref))
+        else
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.bg1,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border1),
+            ),
+            child: const Center(child: Text(
+              'No activities yet. Tap + Add to create one.',
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+            )),
           ),
-          ...activities.map((item) => _buildActivityItem(item, ref)),
-        ],
       ],
     );
   }
@@ -1288,6 +1324,226 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             child: item.done ? const Icon(Icons.check_rounded, size: 16, color: AppColors.green) : null,
           ),
         ]),
+      ),
+    );
+  }
+  // ─── Add Activity Dialog ────────────────────────────────────
+  void _showAddActivityDialog(WidgetRef ref) {
+    String selectedType = 'workout';
+    final titleCtrl = TextEditingController(text: 'Workout');
+    final timeCtrl = TextEditingController(text: '18:00');
+    final subCtrl = TextEditingController(text: '30 min session');
+    bool setReminder = true;
+
+    final activityOptions = [
+      {'key': 'workout', 'icon': '\u{1F3CB}', 'label': 'Workout', 'sub': '30 min session'},
+      {'key': 'walk', 'icon': '\u{1F6B6}', 'label': 'Walk', 'sub': '20 min walk'},
+      {'key': 'yoga', 'icon': '\u{1F9D8}', 'label': 'Yoga', 'sub': '30 min yoga'},
+      {'key': 'meditation', 'icon': '\u{1F9D8}', 'label': 'Meditation', 'sub': '15 min meditation'},
+      {'key': 'cycling', 'icon': '\u{1F6B4}', 'label': 'Cycling', 'sub': '30 min cycle'},
+      {'key': 'swimming', 'icon': '\u{1F3CA}', 'label': 'Swimming', 'sub': '30 min swim'},
+      {'key': 'custom', 'icon': '\u{2B50}', 'label': 'Custom', 'sub': ''},
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDState) => AlertDialog(
+          backgroundColor: AppColors.bg2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(children: [
+            Icon(Icons.add_circle_outline, color: AppColors.accent, size: 22),
+            SizedBox(width: 10),
+            Text('Add Activity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+          ]),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Activity type grid
+                const Text('Activity type:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8, runSpacing: 8,
+                  children: activityOptions.map((opt) {
+                    final isSelected = selectedType == opt['key'];
+                    return GestureDetector(
+                      onTap: () => setDState(() {
+                        selectedType = opt['key']!;
+                        if (selectedType != 'custom') {
+                          titleCtrl.text = opt['label']!;
+                          subCtrl.text = opt['sub']!;
+                        }
+                      }),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.accent.withOpacity(0.15) : AppColors.bg3,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: isSelected ? AppColors.accent : AppColors.border1),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(opt['icon']!, style: const TextStyle(fontSize: 16)),
+                            const SizedBox(width: 6),
+                            Text(opt['label']!, style: TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600,
+                              color: isSelected ? AppColors.accent : AppColors.textSecondary,
+                            )),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+                // Title
+                TextField(
+                  controller: titleCtrl,
+                  style: const TextStyle(color: AppColors.white, fontSize: 14),
+                  decoration: _editDecor('Title'),
+                ),
+                const SizedBox(height: 10),
+                // Time picker
+                Row(children: [
+                  SizedBox(width: 100, child: TextField(
+                    controller: timeCtrl,
+                    style: const TextStyle(color: AppColors.white, fontSize: 14),
+                    decoration: _editDecor('Time'),
+                  )),
+                  const SizedBox(width: 10),
+                  Expanded(child: InkWell(
+                    onTap: () async {
+                      final parts = timeCtrl.text.split(':');
+                      final t = await showTimePicker(context: context,
+                        initialTime: TimeOfDay(hour: int.tryParse(parts[0]) ?? 18, minute: int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0));
+                      if (t != null) {
+                        timeCtrl.text = '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
+                      child: const Row(children: [
+                        Icon(Icons.access_time, size: 16, color: AppColors.accent),
+                        SizedBox(width: 6),
+                        Text('Pick time', style: TextStyle(fontSize: 12, color: AppColors.accent)),
+                      ]),
+                    ),
+                  )),
+                ]),
+                const SizedBox(height: 10),
+                // Description
+                TextField(
+                  controller: subCtrl,
+                  style: const TextStyle(color: AppColors.white, fontSize: 14),
+                  decoration: _editDecor('Description'),
+                ),
+                const SizedBox(height: 12),
+                // Reminder toggle
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.bg3,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(children: [
+                    const Icon(Icons.notifications_active, size: 16, color: AppColors.amber),
+                    const SizedBox(width: 8),
+                    const Expanded(child: Text('Set reminder notification', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
+                    Switch(
+                      value: setReminder,
+                      onChanged: (v) => setDState(() => setReminder = v),
+                      activeColor: AppColors.accent,
+                    ),
+                  ]),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final title = titleCtrl.text.trim();
+                if (title.isEmpty) return;
+
+                // Request notification permission if reminder is on
+                if (setReminder) {
+                  final granted = await NotificationService.instance.requestPermission();
+                  if (!granted && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Notification permission denied. Reminders won\u2019t work.'),
+                      backgroundColor: AppColors.red,
+                    ));
+                  }
+                }
+
+                final option = activityOptions.firstWhere((o) => o['key'] == selectedType, orElse: () => activityOptions.last);
+                final icon = option['icon']!;
+
+                // Determine schedule item type
+                ScheduleItemType itemType;
+                switch (selectedType) {
+                  case 'walk': itemType = ScheduleItemType.walk; break;
+                  case 'workout':
+                  case 'yoga':
+                  case 'cycling':
+                  case 'swimming': itemType = ScheduleItemType.workout; break;
+                  default: itemType = ScheduleItemType.custom; break;
+                }
+
+                final item = ScheduleItem(
+                  id: const Uuid().v4(),
+                  time: timeCtrl.text.trim(),
+                  title: title,
+                  sub: subCtrl.text.trim(),
+                  icon: icon,
+                  type: itemType,
+                  calories: 0, protein: 0, carbs: 0, fat: 0,
+                  done: false, remOn: setReminder, isCustom: false,
+                );
+                ref.read(appProvider.notifier).addScheduleItem(item);
+
+                // Create a reminder too if toggled on
+                if (setReminder) {
+                  ref.read(appProvider.notifier).addReminder(Reminder(
+                    id: const Uuid().v4(),
+                    title: title,
+                    time: timeCtrl.text.trim(),
+                    type: selectedType == 'walk' ? 'walk' : 'workout',
+                    repeat: 'daily',
+                    enabled: true,
+                  ));
+                }
+
+                Navigator.pop(ctx);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Row(children: [
+                      Text(icon, style: const TextStyle(fontSize: 18)),
+                      const SizedBox(width: 8),
+                      Text('$title added${setReminder ? ' with reminder' : ''}'),
+                    ]),
+                    backgroundColor: AppColors.bg3,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ));
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.accent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Add Activity', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
   }
