@@ -1,11 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'app/router.dart';
 import 'constants/colors.dart';
+import 'store/types.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Firebase initialization etc. will go here
+  
+  // Initialize Hive
+  await Hive.initFlutter();
+  Hive.registerAdapter(AppModeAdapter());
+  Hive.registerAdapter(BmiCategoryAdapter());
+  Hive.registerAdapter(GymGoalAdapter());
+  Hive.registerAdapter(ScheduleItemTypeAdapter());
+  Hive.registerAdapter(ScheduleItemAdapter());
+  Hive.registerAdapter(MacroTargetsAdapter());
+  Hive.registerAdapter(WaterConfigAdapter());
+  Hive.registerAdapter(WeightEntryAdapter());
+  Hive.registerAdapter(UserProfileAdapter());
+  Hive.registerAdapter(ReminderAdapter());
+  Hive.registerAdapter(LogEntryAdapter());
+  Hive.registerAdapter(DayRecordAdapter());
+
+  await Hive.openBox('vitatrack_data');
 
   runApp(
     const ProviderScope(

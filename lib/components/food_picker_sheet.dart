@@ -10,7 +10,7 @@ import '../../store/types.dart';
 /// and adds it to the schedule as a completed meal.
 class FoodPickerSheet extends ConsumerStatefulWidget {
   final String mealType; // 'breakfast', 'lunch', 'dinner', 'snack'
-  const FoodPickerSheet({Key? key, required this.mealType}) : super(key: key);
+  const FoodPickerSheet({super.key, required this.mealType});
 
   @override
   ConsumerState<FoodPickerSheet> createState() => _FoodPickerSheetState();
@@ -18,6 +18,9 @@ class FoodPickerSheet extends ConsumerStatefulWidget {
 
 class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
   String _search = '';
+  // Map of food item ID to selected servings (default 1)
+  final Map<String, double> _servings = {};
+  String? _expandedId;
 
   List<FoodItem> get _filteredItems {
     final items = FoodDatabase.getByCategory(widget.mealType);
@@ -26,6 +29,13 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
     return items.where((i) =>
       i.name.toLowerCase().contains(q) ||
       i.description.toLowerCase().contains(q)
+    ).toList();
+  }
+
+  // Get items already logged for this exact meal category (based on default time)
+  List<ScheduleItem> _getAlreadyLogged(List<ScheduleItem> schedule) {
+    return schedule.where((s) => 
+      s.time == _defaultTime && s.done && s.isCustom
     ).toList();
   }
 
@@ -51,9 +61,12 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(appProvider);
+    final loggedItems = _getAlreadyLogged(state.schedule);
+
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: MediaQuery.of(context).size.height * 0.90,
       ),
       decoration: const BoxDecoration(
         color: AppColors.bg2,
@@ -118,13 +131,26 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
           ),
           // Food list
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: _filteredItems.length,
-              itemBuilder: (context, index) {
-                final food = _filteredItems[index];
-                return _buildFoodTile(food);
-              },
+              children: [
+                if (loggedItems.isNotEmpty && _search.isEmpty) ...[
+                  const Text('Already logged', style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.accent,
+                  )),
+                  const SizedBox(height: 10),
+                  ...loggedItems.map((s) => _buildLoggedTile(s)),
+                  const SizedBox(height: 16),
+                  const Divider(color: AppColors.border1, height: 1),
+                  const SizedBox(height: 16),
+                  const Text('Add more', style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary,
+                  )),
+                  const SizedBox(height: 10),
+                ],
+                ..._filteredItems.map((food) => _buildFoodTile(food)),
+                const SizedBox(height: 40), // Padding at bottom
+              ],
             ),
           ),
         ],
@@ -132,58 +158,187 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
     );
   }
 
-  Widget _buildFoodTile(FoodItem food) {
-    return InkWell(
-      onTap: () => _selectFood(food),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.bg1,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44, height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.iconMeal.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Text(food.icon, style: const TextStyle(fontSize: 22)),
+  Widget _buildLoggedTile(ScheduleItem item) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: AppColors.iconMeal.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            alignment: Alignment.center,
+            child: Text(item.icon, style: const TextStyle(fontSize: 18)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.title, style: const TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white,
+                )),
+                const SizedBox(height: 2),
+                Text('${item.calories.toInt()} kcal · ${item.sub}', style: const TextStyle(
+                  fontSize: 11, color: AppColors.textSecondary,
+                )),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.remove_circle_outline, color: AppColors.red, size: 20),
+            onPressed: () {
+              ref.read(appProvider.notifier).deleteScheduleItem(item.id);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFoodTile(FoodItem food) {
+    final isExpanded = _expandedId == food.id;
+    final qty = _servings[food.id] ?? 1.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isExpanded ? AppColors.bg3 : AppColors.bg1,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isExpanded ? AppColors.accent : AppColors.border1),
+      ),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _expandedId = isExpanded ? null : food.id;
+            if (!isExpanded && !_servings.containsKey(food.id)) {
+              _servings[food.id] = 1.0;
+            }
+          });
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  Text(food.name, style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white,
-                  )),
-                  const SizedBox(height: 2),
-                  Text(food.description, style: const TextStyle(
-                    fontSize: 12, color: AppColors.textSecondary,
-                  )),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      _macroChip('${food.calories.toInt()} kcal', AppColors.accent),
-                      const SizedBox(width: 6),
-                      _macroChip('P:${food.protein.toInt()}g', AppColors.blue),
-                      const SizedBox(width: 6),
-                      _macroChip('C:${food.carbs.toInt()}g', AppColors.amber),
-                      const SizedBox(width: 6),
-                      _macroChip('F:${food.fat.toInt()}g', AppColors.red),
-                    ],
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.iconMeal.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(food.icon, style: const TextStyle(fontSize: 22)),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(food.name, style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white,
+                        )),
+                        const SizedBox(height: 2),
+                        Text(food.description, style: const TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary,
+                        )),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            _macroChip('${(food.calories * qty).toInt()} kcal', AppColors.accent),
+                            const SizedBox(width: 6),
+                            _macroChip('P:${(food.protein * qty).toInt()}g', AppColors.blue),
+                            const SizedBox(width: 6),
+                            _macroChip('C:${(food.carbs * qty).toInt()}g', AppColors.amber),
+                            const SizedBox(width: 6),
+                            _macroChip('F:${(food.fat * qty).toInt()}g', AppColors.red),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    isExpanded ? Icons.keyboard_arrow_up : Icons.add_circle_outline,
+                    color: isExpanded ? AppColors.textSecondary : AppColors.accent,
+                    size: 24,
                   ),
                 ],
               ),
-            ),
-            const Icon(Icons.add_circle_outline, color: AppColors.accent, size: 24),
-          ],
+              if (isExpanded) ...[
+                const SizedBox(height: 16),
+                const Divider(color: AppColors.border1, height: 1),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('Quantity:', style: TextStyle(
+                          fontSize: 13, color: AppColors.textSecondary,
+                        )),
+                        const SizedBox(width: 12),
+                        // Stepper
+                        Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.bg1,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.border2),
+                          ),
+                          child: Row(
+                            children: [
+                              InkWell(
+                                onTap: qty > 0.5 ? () => setState(() => _servings[food.id] = qty - 0.5) : null,
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  child: Icon(Icons.remove, size: 16, color: AppColors.textPrimary),
+                                ),
+                              ),
+                              Text(qty % 1 == 0 ? qty.toInt().toString() : qty.toStringAsFixed(1), style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white,
+                              )),
+                              InkWell(
+                                onTap: () => setState(() => _servings[food.id] = qty + 0.5),
+                                child: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  child: Icon(Icons.add, size: 16, color: AppColors.textPrimary),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(food.servingSize, style: const TextStyle(
+                          fontSize: 12, color: AppColors.textSecondary,
+                        )),
+                      ],
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _selectFood(food, qty),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                        minimumSize: const Size(0, 36),
+                      ),
+                      child: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -193,35 +348,37 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(text, style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600)),
     );
   }
 
-  void _selectFood(FoodItem food) {
+  void _selectFood(FoodItem food, double qty) {
     final item = ScheduleItem(
       id: const Uuid().v4(),
       time: _defaultTime,
       title: food.name,
-      sub: food.description,
+      sub: 'Qty: ${qty % 1 == 0 ? qty.toInt() : qty.toStringAsFixed(1)} x ${food.servingSize}',
       icon: food.icon,
       type: widget.mealType == 'snack' ? ScheduleItemType.snack : ScheduleItemType.meal,
-      calories: food.calories,
-      protein: food.protein,
-      carbs: food.carbs,
-      fat: food.fat,
+      calories: food.calories * qty,
+      protein: food.protein * qty,
+      carbs: food.carbs * qty,
+      fat: food.fat * qty,
       done: true, // Auto-mark as eaten
       remOn: false,
       isCustom: true,
     );
     ref.read(appProvider.notifier).addScheduleItem(item);
-    Navigator.pop(context);
+    setState(() {
+      _expandedId = null; // collapse
+    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${food.name} added — ${food.calories.toInt()} kcal'),
+        content: Text('${food.name} added — ${(food.calories * qty).toInt()} kcal'),
         backgroundColor: AppColors.bg3,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

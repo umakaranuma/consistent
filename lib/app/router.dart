@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/today_screen.dart';
 import 'screens/calendar_screen.dart';
@@ -89,10 +89,10 @@ class MainTabScaffold extends StatelessWidget {
 GoRouter buildRouter() {
   return GoRouter(
     initialLocation: routeToday,
-    redirect: (context, state) async {
-      final prefs = await SharedPreferences.getInstance();
-      final onboarded = prefs.getString('vitatrack_onboarded');
-      if (onboarded == null && state.matchedLocation != routeOnboarding) {
+    redirect: (context, state) {
+      final box = Hive.box('vitatrack_data');
+      final profile = box.get('profile');
+      if (profile == null && state.matchedLocation != routeOnboarding) {
         return routeOnboarding;
       }
       return null;

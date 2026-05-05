@@ -1,25 +1,56 @@
-enum AppMode { normal, gym }
+import 'package:hive/hive.dart';
 
-enum BmiCategory { underweight, normal, overweight, obese }
+part 'types.g.dart';
 
-enum GymGoal { fatLoss, muscleGain, maintenance, recomp }
+@HiveType(typeId: 0)
+enum AppMode {
+  @HiveField(0) normal,
+  @HiveField(1) gym,
+}
 
-enum ScheduleItemType { meal, water, workout, snack, sleep, walk, protein, custom }
+@HiveType(typeId: 1)
+enum BmiCategory {
+  @HiveField(0) underweight,
+  @HiveField(1) normal,
+  @HiveField(2) overweight,
+  @HiveField(3) obese,
+}
 
+@HiveType(typeId: 2)
+enum GymGoal {
+  @HiveField(0) fatLoss,
+  @HiveField(1) muscleGain,
+  @HiveField(2) maintenance,
+  @HiveField(3) recomp,
+}
+
+@HiveType(typeId: 3)
+enum ScheduleItemType {
+  @HiveField(0) meal,
+  @HiveField(1) water,
+  @HiveField(2) workout,
+  @HiveField(3) snack,
+  @HiveField(4) sleep,
+  @HiveField(5) walk,
+  @HiveField(6) protein,
+  @HiveField(7) custom,
+}
+
+@HiveType(typeId: 4)
 class ScheduleItem {
-  final String id;
-  final String time; // "HH:MM" 24h
-  final String title;
-  final String sub; // description
-  final String icon; // emoji
-  final ScheduleItemType type;
-  final double calories; // kcal
-  final double protein; // grams
-  final double carbs; // grams
-  final double fat; // grams
-  final bool done;
-  final bool remOn;
-  final bool isCustom;
+  @HiveField(0) final String id;
+  @HiveField(1) final String time; // "HH:MM" 24h
+  @HiveField(2) final String title;
+  @HiveField(3) final String sub; // description
+  @HiveField(4) final String icon; // emoji
+  @HiveField(5) final ScheduleItemType type;
+  @HiveField(6) final double calories; // kcal
+  @HiveField(7) final double protein; // grams
+  @HiveField(8) final double carbs; // grams
+  @HiveField(9) final double fat; // grams
+  @HiveField(10) final bool done;
+  @HiveField(11) final bool remOn;
+  @HiveField(12) final bool isCustom;
 
   ScheduleItem({
     required this.id,
@@ -70,11 +101,12 @@ class ScheduleItem {
   }
 }
 
+@HiveType(typeId: 5)
 class MacroTargets {
-  final double calories;
-  final double protein;
-  final double carbs;
-  final double fat;
+  @HiveField(0) final double calories;
+  @HiveField(1) final double protein;
+  @HiveField(2) final double carbs;
+  @HiveField(3) final double fat;
 
   MacroTargets({
     required this.calories,
@@ -93,14 +125,15 @@ class MacroTargets {
   }
 }
 
+@HiveType(typeId: 6)
 class WaterConfig {
-  final double consumed;
-  final double target;
-  final bool reminderEnabled;
-  final double reminderIntervalMinutes;
-  final String reminderStartTime;
-  final String reminderEndTime;
-  final double mlPerReminder;
+  @HiveField(0) final double consumed;
+  @HiveField(1) final double target;
+  @HiveField(2) final bool reminderEnabled;
+  @HiveField(3) final double reminderIntervalMinutes;
+  @HiveField(4) final String reminderStartTime;
+  @HiveField(5) final String reminderEndTime;
+  @HiveField(6) final double mlPerReminder;
 
   WaterConfig({
     required this.consumed,
@@ -133,10 +166,11 @@ class WaterConfig {
   }
 }
 
+@HiveType(typeId: 7)
 class WeightEntry {
-  final String date; // "YYYY-MM-DD"
-  final double weight;
-  final double bmi;
+  @HiveField(0) final String date; // "YYYY-MM-DD"
+  @HiveField(1) final double weight;
+  @HiveField(2) final double bmi;
 
   WeightEntry({
     required this.date,
@@ -145,28 +179,29 @@ class WeightEntry {
   });
 }
 
+@HiveType(typeId: 8)
 class UserProfile {
-  final String name;
-  final double age;
-  final String gender; // 'male' | 'female'
-  final double heightCm;
-  final double currentWeight;
-  final double goalWeight;
-  final double bmi;
-  final BmiCategory bmiCategory;
-  final AppMode mode;
-  final GymGoal? gymGoal;
-  final double stepGoal;
-  final MacroTargets macroTargets;
-  final String units; // 'metric' | 'imperial'
-  final String activityLevel; // 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
-  final String workStartTime;
-  final String workEndTime;
-  final String sleepTime;
-  final bool pushEnabled;
-  final bool workoutReminders;
-  final bool sleepReminder;
-  final bool planLockedByUser;
+  @HiveField(0) final String name;
+  @HiveField(1) final double age;
+  @HiveField(2) final String gender; // 'male' | 'female'
+  @HiveField(3) final double heightCm;
+  @HiveField(4) final double currentWeight;
+  @HiveField(5) final double goalWeight;
+  @HiveField(6) final double bmi;
+  @HiveField(7) final BmiCategory bmiCategory;
+  @HiveField(8) final AppMode mode;
+  @HiveField(9) final GymGoal? gymGoal;
+  @HiveField(10) final double stepGoal;
+  @HiveField(11) final MacroTargets macroTargets;
+  @HiveField(12) final String units; // 'metric' | 'imperial'
+  @HiveField(13) final String activityLevel; // 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
+  @HiveField(14) final String workStartTime;
+  @HiveField(15) final String workEndTime;
+  @HiveField(16) final String sleepTime;
+  @HiveField(17) final bool pushEnabled;
+  @HiveField(18) final bool workoutReminders;
+  @HiveField(19) final bool sleepReminder;
+  @HiveField(20) final bool planLockedByUser;
 
   UserProfile({
     required this.name,
@@ -241,14 +276,15 @@ class UserProfile {
   }
 }
 
+@HiveType(typeId: 9)
 class Reminder {
-  final String id;
-  final String title;
-  final String time; // "HH:MM"
-  final String type; // ScheduleItemType string | 'custom'
-  final String repeat; // 'daily' | 'weekday' | 'once'
-  final bool enabled;
-  final String? notifId;
+  @HiveField(0) final String id;
+  @HiveField(1) final String title;
+  @HiveField(2) final String time; // "HH:MM"
+  @HiveField(3) final String type; // ScheduleItemType string | 'custom'
+  @HiveField(4) final String repeat; // 'daily' | 'weekday' | 'once'
+  @HiveField(5) final bool enabled;
+  @HiveField(6) final String? notifId;
 
   Reminder({
     required this.id,
@@ -261,26 +297,28 @@ class Reminder {
   });
 }
 
+@HiveType(typeId: 10)
 class LogEntry {
-  final String time;
-  final String message;
+  @HiveField(0) final String time;
+  @HiveField(1) final String message;
 
   LogEntry({required this.time, required this.message});
 }
 
+@HiveType(typeId: 11)
 class DayRecord {
-  final String date; // "YYYY-MM-DD"
-  final String status; // 'success' | 'partial' | 'failed' | 'none'
-  final double dietScore;
-  final double waterScore;
-  final bool workoutDone;
-  final double calorieScore;
-  final double proteinScore;
-  final double waterConsumed;
-  final double caloriesEaten;
-  final double proteinEaten;
-  final double bmiAtDay;
-  final List<LogEntry> log;
+  @HiveField(0) final String date; // "YYYY-MM-DD"
+  @HiveField(1) final String status; // 'success' | 'partial' | 'failed' | 'none'
+  @HiveField(2) final double dietScore;
+  @HiveField(3) final double waterScore;
+  @HiveField(4) final bool workoutDone;
+  @HiveField(5) final double calorieScore;
+  @HiveField(6) final double proteinScore;
+  @HiveField(7) final double waterConsumed;
+  @HiveField(8) final double caloriesEaten;
+  @HiveField(9) final double proteinEaten;
+  @HiveField(10) final double bmiAtDay;
+  @HiveField(11) final List<LogEntry> log;
 
   DayRecord({
     required this.date,

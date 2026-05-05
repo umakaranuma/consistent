@@ -1,3 +1,4 @@
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'types.dart';
 import '../utils/bmi_engine.dart';
@@ -47,86 +48,80 @@ class AppState {
 }
 
 class AppNotifier extends Notifier<AppState> {
+  late Box _box;
+
   @override
   AppState build() {
-    // Default state with generated plan — will be overwritten by onboarding
-    final defaultProfile = UserProfile(
-      name: 'User',
-      age: 25,
-      gender: 'male',
-      heightCm: 170,
-      currentWeight: 75,
-      goalWeight: 65,
-      bmi: 25.9,
-      bmiCategory: BmiCategory.overweight,
-      mode: AppMode.normal,
-      stepGoal: 10000,
-      macroTargets: MacroTargets(calories: 2000, protein: 120, carbs: 200, fat: 55),
-      units: 'metric',
-      activityLevel: 'moderate',
-      workStartTime: '09:00',
-      workEndTime: '18:00',
-      sleepTime: '23:00',
-      pushEnabled: true,
-      workoutReminders: true,
-      sleepReminder: true,
-      planLockedByUser: false,
-    );
+    _box = Hive.box('vitatrack_data');
 
-    final waterConfig = WaterConfig(
-      consumed: 0,
-      target: 2750,
-      reminderEnabled: true,
-      reminderIntervalMinutes: 60,
-      reminderStartTime: '08:00',
-      reminderEndTime: '21:00',
-      mlPerReminder: 250,
-    );
-
-    final defaultSchedule = BmiEngine.generatePlan(defaultProfile);
+    final profile = _box.get('profile') as UserProfile?;
+    final waterConfig = _box.get('waterConfig') as WaterConfig?;
+    final schedule = (_box.get('schedule') as List?)?.cast<ScheduleItem>() ?? [];
+    final reminders = (_box.get('reminders') as List?)?.cast<Reminder>() ?? [];
+    final records = (_box.get('records') as List?)?.cast<DayRecord>() ?? [];
+    final weightEntries = (_box.get('weightEntries') as List?)?.cast<WeightEntry>() ?? [];
+    final activityLog = (_box.get('activityLog') as List?)?.cast<LogEntry>() ?? [];
+    final streak = _box.get('streak', defaultValue: 0) as int;
 
     return AppState(
-      profile: defaultProfile,
+      profile: profile,
       waterConfig: waterConfig,
-      schedule: defaultSchedule,
+      schedule: schedule,
+      reminders: reminders,
+      records: records,
+      weightEntries: weightEntries,
+      activityLog: activityLog,
+      streak: streak,
     );
+  }
+
+  void _saveState(AppState newState) {
+    state = newState;
+    _box.put('profile', state.profile);
+    _box.put('waterConfig', state.waterConfig);
+    _box.put('schedule', state.schedule);
+    _box.put('reminders', state.reminders);
+    _box.put('records', state.records);
+    _box.put('weightEntries', state.weightEntries);
+    _box.put('activityLog', state.activityLog);
+    _box.put('streak', state.streak);
   }
 
   // ─── Profile ─────────────────────────────────────────────
   void setProfile(UserProfile profile) {
-    state = state.copyWith(profile: profile);
+    _saveState(state.copyWith(profile: profile));
   }
 
   void updateProfile(UserProfile profile) {
-    state = state.copyWith(profile: profile);
+    _saveState(state.copyWith(profile: profile));
   }
 
   // ─── Water ───────────────────────────────────────────────
   void setWaterConfig(WaterConfig config) {
-    state = state.copyWith(waterConfig: config);
+    _saveState(state.copyWith(waterConfig: config));
   }
 
   void addWater(double ml) {
     if (state.waterConfig != null) {
       final config = state.waterConfig!;
-      state = state.copyWith(
+      _saveState(state.copyWith(
         waterConfig: config.copyWith(consumed: config.consumed + ml),
-      );
+      ));
       _addLog('Added ${ml.toInt()}ml water');
     }
   }
 
   void resetWater() {
     if (state.waterConfig != null) {
-      state = state.copyWith(
+      _saveState(state.copyWith(
         waterConfig: state.waterConfig!.copyWith(consumed: 0),
-      );
+      ));
     }
   }
 
   // ─── Schedule ────────────────────────────────────────────
   void setSchedule(List<ScheduleItem> schedule) {
-    state = state.copyWith(schedule: schedule);
+    _saveState(state.copyWith(schedule: schedule));
   }
 
   void toggleScheduleItem(String id) {
@@ -138,7 +133,7 @@ class AppNotifier extends Notifier<AppState> {
       }
       return item;
     }).toList();
-    state = state.copyWith(schedule: schedule);
+    _saveState(state.copyWith(schedule: schedule));
   }
 
   void updateScheduleItem(String id, ScheduleItem updated) {
@@ -146,49 +141,52 @@ class AppNotifier extends Notifier<AppState> {
       return item.id == id ? updated : item;
     }).toList();
     schedule.sort((a, b) => a.time.compareTo(b.time));
-    state = state.copyWith(schedule: schedule);
+    var newState = state.copyWith(schedule: schedule);
     // Mark plan as user-edited
-    if (state.profile != null) {
-      state = state.copyWith(
-        profile: state.profile!.copyWith(planLockedByUser: true),
+    if (newState.profile != null) {
+      newState = newState.copyWith(
+        profile: newState.profile!.copyWith(planLockedByUser: true),
       );
     }
+    _saveState(newState);
   }
 
   void addScheduleItem(ScheduleItem item) {
     final schedule = [...state.schedule, item];
     schedule.sort((a, b) => a.time.compareTo(b.time));
-    state = state.copyWith(schedule: schedule);
-    if (state.profile != null) {
-      state = state.copyWith(
-        profile: state.profile!.copyWith(planLockedByUser: true),
+    var newState = state.copyWith(schedule: schedule);
+    if (newState.profile != null) {
+      newState = newState.copyWith(
+        profile: newState.profile!.copyWith(planLockedByUser: true),
       );
     }
+    _saveState(newState);
   }
 
   void deleteScheduleItem(String id) {
     final schedule = state.schedule.where((i) => i.id != id).toList();
-    state = state.copyWith(schedule: schedule);
-    if (state.profile != null) {
-      state = state.copyWith(
-        profile: state.profile!.copyWith(planLockedByUser: true),
+    var newState = state.copyWith(schedule: schedule);
+    if (newState.profile != null) {
+      newState = newState.copyWith(
+        profile: newState.profile!.copyWith(planLockedByUser: true),
       );
     }
+    _saveState(newState);
   }
 
   void regeneratePlan() {
     if (state.profile != null) {
       final plan = BmiEngine.generatePlan(state.profile!);
-      state = state.copyWith(
+      _saveState(state.copyWith(
         schedule: plan,
         profile: state.profile!.copyWith(planLockedByUser: false),
-      );
+      ));
     }
   }
 
   void resetDailySchedule() {
     final schedule = state.schedule.map((item) => item.copyWith(done: false)).toList();
-    state = state.copyWith(schedule: schedule);
+    _saveState(state.copyWith(schedule: schedule));
     resetWater();
     clearActivityLog();
   }
@@ -197,7 +195,7 @@ class AppNotifier extends Notifier<AppState> {
   void addWeightEntry(WeightEntry entry) {
     final entries = List<WeightEntry>.from(state.weightEntries)..add(entry);
     entries.sort((a, b) => a.date.compareTo(b.date));
-    state = state.copyWith(weightEntries: entries);
+    var newState = state.copyWith(weightEntries: entries);
 
     // Cascade: recalculate BMI, macros, water target
     if (state.profile != null) {
@@ -226,17 +224,18 @@ class AppNotifier extends Notifier<AppState> {
         bmiCategory: newCat,
         macroTargets: macros,
       );
-      state = state.copyWith(
+      newState = newState.copyWith(
         profile: updatedProfile,
-        waterConfig: state.waterConfig?.copyWith(target: waterTarget),
+        waterConfig: newState.waterConfig?.copyWith(target: waterTarget),
       );
 
       // Auto-regenerate plan if BMI category changed
       if (newCat != profile.bmiCategory && !profile.planLockedByUser) {
         final plan = BmiEngine.generatePlan(updatedProfile);
-        state = state.copyWith(schedule: plan);
+        newState = newState.copyWith(schedule: plan);
       }
 
+      _saveState(newState);
       _addLog('Weight: ${entry.weight}kg · BMI $newBmi');
     }
   }
@@ -246,20 +245,20 @@ class AppNotifier extends Notifier<AppState> {
     final now = DateTime.now();
     final time = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     final log = [LogEntry(time: time, message: message), ...state.activityLog];
-    state = state.copyWith(activityLog: log);
+    _saveState(state.copyWith(activityLog: log));
   }
 
   void clearActivityLog() {
-    state = state.copyWith(activityLog: []);
+    _saveState(state.copyWith(activityLog: []));
   }
 
   // ─── Reminders ───────────────────────────────────────────
   void setReminders(List<Reminder> reminders) {
-    state = state.copyWith(reminders: reminders);
+    _saveState(state.copyWith(reminders: reminders));
   }
 
   void addReminder(Reminder reminder) {
-    state = state.copyWith(reminders: [...state.reminders, reminder]);
+    _saveState(state.copyWith(reminders: [...state.reminders, reminder]));
   }
 
   void toggleReminder(String id) {
@@ -273,13 +272,13 @@ class AppNotifier extends Notifier<AppState> {
       }
       return r;
     }).toList();
-    state = state.copyWith(reminders: reminders);
+    _saveState(state.copyWith(reminders: reminders));
   }
 
   void deleteReminder(String id) {
-    state = state.copyWith(
+    _saveState(state.copyWith(
       reminders: state.reminders.where((r) => r.id != id).toList(),
-    );
+    ));
   }
 
   // ─── Computed Helpers ────────────────────────────────────

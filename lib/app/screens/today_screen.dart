@@ -49,7 +49,7 @@ class TodayScreen extends ConsumerWidget {
                   _buildMacroCard(pEaten, cEaten, fEaten, profile.macroTargets, profile.mode),
                   const SizedBox(height: 16),
                   // ─── Water Card ──────────
-                  _buildWaterCard(state.waterConfig, ref),
+                  _buildWaterCard(context, state.waterConfig, ref),
                   const SizedBox(height: 16),
                   // ─── Weekly Workout ──────
                   _buildWeeklyWorkoutRow(profile),
@@ -390,7 +390,7 @@ class TodayScreen extends ConsumerWidget {
   }
 
   // ─── Water Card ───────────────────────────────────────────
-  Widget _buildWaterCard(WaterConfig? config, WidgetRef ref) {
+  Widget _buildWaterCard(BuildContext context, WaterConfig? config, WidgetRef ref) {
     final consumed = config?.consumed ?? 0.0;
     final target = config?.target ?? 2500.0;
     final pct = target > 0 ? (consumed / target * 100).clamp(0, 100).toInt() : 0;
@@ -409,8 +409,25 @@ class TodayScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Water intake', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-              Text('${consumed.toInt()} / ${target.toInt()} ml',
-                style: const TextStyle(fontSize: 12, color: AppColors.accentSoft)),
+              InkWell(
+                onTap: () {
+                  if (config != null) {
+                    _showWaterTargetEditor(context, ref, config);
+                  }
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Row(
+                    children: [
+                      Text('${consumed.toInt()} / ${target.toInt()} ml',
+                        style: const TextStyle(fontSize: 12, color: AppColors.accentSoft, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.edit, size: 12, color: AppColors.accentSoft),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -438,6 +455,70 @@ class TodayScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showWaterTargetEditor(BuildContext context, WidgetRef ref, WaterConfig config) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        double currentTarget = config.target;
+        return StatefulBuilder(builder: (context, setState) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: AppColors.bg1,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Daily Water Target', style: TextStyle(
+                  fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
+                )),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline, size: 32, color: AppColors.textSecondary),
+                      onPressed: currentTarget > 500 ? () => setState(() => currentTarget -= 250) : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Text('${currentTarget.toInt()} ml', style: const TextStyle(
+                      fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.accent,
+                    )),
+                    const SizedBox(width: 16),
+                    IconButton(
+                      icon: const Icon(Icons.add_circle_outline, size: 32, color: AppColors.textSecondary),
+                      onPressed: currentTarget < 8000 ? () => setState(() => currentTarget += 250) : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ref.read(appProvider.notifier).setWaterConfig(config.copyWith(target: currentTarget));
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accent,
+                      foregroundColor: AppColors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: const Text('Save Target', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          );
+        });
+      },
     );
   }
 
