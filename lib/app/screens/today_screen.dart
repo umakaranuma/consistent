@@ -5,6 +5,7 @@ import '../../store/app_provider.dart';
 import '../../store/types.dart';
 import '../../utils/bmi_engine.dart';
 import '../../components/food_picker_sheet.dart';
+import 'bmi_details_screen.dart';
 
 class TodayScreen extends ConsumerWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -37,7 +38,7 @@ class TodayScreen extends ConsumerWidget {
                 children: [
                   const SizedBox(height: 16),
                   // ─── BMI Card ────────────
-                  _buildBmiCard(profile),
+                  _buildBmiCard(context, profile),
                   const SizedBox(height: 16),
                   // ─── Score Row ───────────
                   _buildScoreRow(notifier, profile, state),
@@ -144,7 +145,7 @@ class TodayScreen extends ConsumerWidget {
   }
 
   // ─── BMI Card ─────────────────────────────────────────────
-  Widget _buildBmiCard(UserProfile profile) {
+  Widget _buildBmiCard(BuildContext context, UserProfile profile) {
     final bmiColor = _bmiColor(profile.bmiCategory);
     final bmiLabel = BmiEngine.getBmiLabel(profile.bmiCategory);
     final idealRange = BmiEngine.getIdealWeightRange(profile.heightCm);
@@ -180,7 +181,16 @@ class TodayScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('BMI', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-              Text('Detail ›', style: TextStyle(fontSize: 12, color: AppColors.accent)),
+              InkWell(
+                onTap: () => Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (_) => const BmiDetailsScreen()),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text('Detail ›', style: TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.bold)),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
