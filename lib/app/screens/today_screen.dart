@@ -8,6 +8,7 @@ import '../../utils/notification_service.dart';
 import '../../components/food_picker_sheet.dart';
 import 'package:uuid/uuid.dart';
 import 'bmi_details_screen.dart';
+import '../../constants/exercise_database.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({Key? key}) : super(key: key);
@@ -899,21 +900,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   ).toList(),
                 ),
                 const SizedBox(height: 8),
-                // Exercises
-                Wrap(
-                  spacing: 6, runSpacing: 4,
-                  children: ((todayWorkout['exercises'] as List?)?.cast<String>() ?? []).map((e) =>
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.bg3,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.border1),
-                      ),
-                      child: Text(e, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-                    ),
-                  ).toList(),
-                ),
+                // Exercises with images
+                ..._buildExerciseCards(todayWorkout),
               ],
             ),
           ),
@@ -967,6 +955,88 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         ),
       ],
     );
+  }
+
+
+  List<Widget> _buildExerciseCards(Map<String, dynamic> workout) {
+    final exerciseNames = ((workout['exercises'] as List?) ?? []).cast<String>();
+    final allExercises = ExerciseDatabase.exercises;
+
+    return exerciseNames.map((name) {
+      // Find matching exercise from database
+      final exData = allExercises.firstWhere(
+        (e) => (e['name'] as String).toLowerCase() == name.toLowerCase(),
+        orElse: () => {'name': name, 'target': '', 'sets': '', 'desc': '', 'image': ''},
+      );
+      final imageUrl = exData['image'] as String? ?? '';
+      final target = exData['target'] as String? ?? '';
+      final sets = exData['sets'] as String? ?? '';
+      final desc = exData['desc'] as String? ?? '';
+
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: AppColors.bg2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border1),
+        ),
+        child: Row(children: [
+          // Exercise image
+          if (imageUrl.isNotEmpty)
+            ClipRRect(
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(13)),
+              child: Image.network(
+                imageUrl,
+                width: 72, height: 72,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 72, height: 72,
+                  color: AppColors.bg3,
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.fitness_center, size: 24, color: AppColors.textMuted),
+                ),
+              ),
+            )
+          else
+            Container(
+              width: 72, height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.bg3,
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(13)),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(Icons.fitness_center, size: 24, color: AppColors.textMuted),
+            ),
+          const SizedBox(width: 10),
+          // Details
+          Expanded(child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.white)),
+                if (target.isNotEmpty)
+                  Text(target, style: const TextStyle(fontSize: 10, color: AppColors.accent)),
+                if (desc.isNotEmpty)
+                  Text(desc, style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+                    maxLines: 2, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          )),
+          // Sets badge
+          if (sets.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(right: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(sets, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
+            ),
+        ]),
+      );
+    }).toList();
   }
 
   // --- Edit Gym Split Sheet ---

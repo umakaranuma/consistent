@@ -444,12 +444,12 @@ class AppNotifier extends Notifier<AppState> {
 
   // --- Gym Weekly Split ---
   static const Map<String, Map<String, dynamic>> defaultGymSplit = {
-    'Mon': {'focus': 'Legs & Abs', 'icon': '\u{1F9B5}', 'muscles': ['Quads', 'Hamstrings', 'Calves', 'Abs'], 'exercises': ['Squats', 'Leg Press', 'Lunges', 'Leg Curls', 'Crunches', 'Planks']},
-    'Tue': {'focus': 'Chest & Biceps', 'icon': '\u{1F4AA}', 'muscles': ['Chest', 'Biceps'], 'exercises': ['Bench Press', 'Incline Dumbbell Press', 'Cable Flyes', 'Barbell Curls', 'Hammer Curls']},
-    'Wed': {'focus': 'Back & Triceps', 'icon': '\u{1F3CB}', 'muscles': ['Back', 'Triceps'], 'exercises': ['Deadlifts', 'Lat Pulldown', 'Bent Over Rows', 'Tricep Pushdown', 'Skull Crushers']},
-    'Thu': {'focus': 'Shoulders & Abs', 'icon': '\u{1F9D8}', 'muscles': ['Shoulders', 'Abs'], 'exercises': ['Overhead Press', 'Lateral Raises', 'Front Raises', 'Face Pulls', 'Hanging Leg Raises']},
-    'Fri': {'focus': 'Full Body', 'icon': '\u{26A1}', 'muscles': ['Full Body', 'Compound'], 'exercises': ['Squats', 'Bench Press', 'Deadlifts', 'Pull-ups', 'Dips', 'Planks']},
-    'Sat': {'focus': 'Cardio & HIIT', 'icon': '\u{1F3C3}', 'muscles': ['Cardio', 'Endurance'], 'exercises': ['Running', 'Jump Rope', 'Burpees', 'Mountain Climbers', 'Battle Ropes']},
+    'Mon': {'focus': 'Legs & Abs', 'icon': '\u{1F9B5}', 'muscles': ['Legs', 'Abs'], 'exercises': ['Barbell Squat', 'Leg Press', 'Walking Lunges', 'Leg Curls', 'Calf Raises', 'Crunches', 'Plank Hold', 'Russian Twists']},
+    'Tue': {'focus': 'Chest & Biceps', 'icon': '\u{1F4AA}', 'muscles': ['Chest', 'Biceps'], 'exercises': ['Bench Press', 'Incline Dumbbell Press', 'Cable Flyes', 'Push-ups', 'Barbell Curls', 'Hammer Curls', 'Concentration Curls']},
+    'Wed': {'focus': 'Back & Triceps', 'icon': '\u{1F3CB}', 'muscles': ['Back', 'Triceps'], 'exercises': ['Deadlifts', 'Lat Pulldown', 'Bent Over Rows', 'Seated Cable Rows', 'Pull-ups', 'Tricep Pushdown', 'Skull Crushers', 'Overhead Extension']},
+    'Thu': {'focus': 'Shoulders & Abs', 'icon': '\u{1F9D8}', 'muscles': ['Shoulders', 'Abs'], 'exercises': ['Overhead Press', 'Lateral Raises', 'Front Raises', 'Face Pulls', 'Barbell Shrugs', 'Hanging Leg Raises', 'Mountain Climbers']},
+    'Fri': {'focus': 'Full Body', 'icon': '\u{26A1}', 'muscles': ['Legs', 'Chest', 'Back', 'Shoulders'], 'exercises': ['Barbell Squat', 'Bench Press', 'Deadlifts', 'Pull-ups', 'Overhead Press', 'Chest Dips', 'Plank Hold']},
+    'Sat': {'focus': 'Cardio & HIIT', 'icon': '\u{1F3C3}', 'muscles': ['Cardio'], 'exercises': ['Running', 'Jump Rope', 'Burpees', 'Rowing Machine', 'Mountain Climbers']},
     'Sun': {'focus': 'Rest Day', 'icon': '\u{1F6CC}', 'muscles': ['Recovery'], 'exercises': ['Stretching', 'Light Walk', 'Foam Rolling']},
   };
 
