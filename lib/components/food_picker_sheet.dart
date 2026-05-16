@@ -24,7 +24,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
   String? _expandedId;
 
   List<FoodItem> get _filteredItems {
-    final dbItems = FoodDatabase.getByCategory(widget.mealType);
+    final dbItems = (widget.mealType == 'snack') ? FoodDatabase.getByCategory(widget.mealType) : FoodDatabase.getWithSides(widget.mealType);
     // Add user-created custom foods
     final customFoods = ref.read(appProvider.notifier).customFoods
       .where((f) => f['category'] == widget.mealType || f['category'] == 'all')
