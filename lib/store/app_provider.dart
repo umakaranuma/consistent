@@ -64,6 +64,14 @@ class AppNotifier extends Notifier<AppState> {
     final activityLog = (_box.get('activityLog') as List?)?.cast<LogEntry>() ?? [];
     final streak = _box.get('streak', defaultValue: 0) as int;
 
+    // Auto-sync schedule notifications on startup
+    if (schedule.isNotEmpty) {
+      Future.microtask(() {
+        NotificationService.instance.syncScheduleNotifications(schedule);
+        _startOverdueChecker();
+      });
+    }
+
     return AppState(
       profile: profile,
       waterConfig: waterConfig,
@@ -156,6 +164,7 @@ class AppNotifier extends Notifier<AppState> {
   // ─── Schedule ────────────────────────────────────────────
   void setSchedule(List<ScheduleItem> schedule) {
     _saveState(state.copyWith(schedule: schedule));
+    _syncScheduleNotifications();
   }
 
   void toggleScheduleItem(String id) {
@@ -168,6 +177,8 @@ class AppNotifier extends Notifier<AppState> {
       return item;
     }).toList();
     _saveState(state.copyWith(schedule: schedule));
+    // Restart overdue checker with updated schedule state
+    _startOverdueChecker();
   }
 
   void updateScheduleItem(String id, ScheduleItem updated) {
@@ -183,6 +194,7 @@ class AppNotifier extends Notifier<AppState> {
       );
     }
     _saveState(newState);
+    _syncScheduleNotifications();
   }
 
   void addScheduleItem(ScheduleItem item) {
@@ -195,6 +207,7 @@ class AppNotifier extends Notifier<AppState> {
       );
     }
     _saveState(newState);
+    _syncScheduleNotifications();
   }
 
   void deleteScheduleItem(String id) {
@@ -206,6 +219,7 @@ class AppNotifier extends Notifier<AppState> {
       );
     }
     _saveState(newState);
+    _syncScheduleNotifications();
   }
 
   void regeneratePlan() {
@@ -215,6 +229,7 @@ class AppNotifier extends Notifier<AppState> {
         schedule: plan,
         profile: state.profile!.copyWith(planLockedByUser: false),
       ));
+      _syncScheduleNotifications();
     }
   }
 
@@ -223,6 +238,8 @@ class AppNotifier extends Notifier<AppState> {
     _saveState(state.copyWith(schedule: schedule));
     resetWater();
     clearActivityLog();
+    _syncScheduleNotifications();
+    _startOverdueChecker();
   }
 
   // ─── Weight Entries ──────────────────────────────────────
@@ -323,6 +340,23 @@ class AppNotifier extends Notifier<AppState> {
     NotificationService.instance.syncReminders(state.reminders);
   }
 
+  // ─── Schedule Notification Sync ──────────────────────────
+  void _syncScheduleNotifications() {
+    NotificationService.instance.syncScheduleNotifications(state.schedule);
+  }
+
+  // ─── Overdue Checker ─────────────────────────────────────
+  void _startOverdueChecker() {
+    NotificationService.instance.startOverdueChecker(
+      getSchedule: () => state.schedule,
+      getWaterConfig: () => state.waterConfig,
+    );
+  }
+
+  void stopOverdueChecker() {
+    NotificationService.instance.stopOverdueChecker();
+  }
+
   // ─── Computed Helpers ────────────────────────────────────
   double get caloriesEaten =>
     state.schedule.where((i) => i.done).fold(0.0, (s, i) => s + i.calories);
@@ -373,7 +407,43 @@ class AppNotifier extends Notifier<AppState> {
     _box.put('customFoods', foods);
   }
 
-  // ─── Health Insights ───────────────────────────────────────
+  // ─── Health Insights (Schedule-Time-Aware) ──────────────────
+  // Helper to parse "HH:MM" to minutes
+  int _parseTimeToMin(String time) {
+    final parts = time.split(':');
+    return (int.tryParse(parts[0]) ?? 0) * 60 + (parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0);
+  }
+
+  String _formatTime(String time) {
+    final parts = time.split(':');
+    final h = int.tryParse(parts[0]) ?? 0;
+    final m = parts.length > 1 ? (int.tryParse(parts[1]) ?? 0) : 0;
+    final ampm = h >= 12 ? 'PM' : 'AM';
+    final h12 = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+    return '$h12:${m.toString().padLeft(2, '0')} $ampm';
+  }
+
+  /// Find the first schedule item matching a type (non-custom)
+  ScheduleItem? _findScheduleItem(ScheduleItemType type) {
+    try {
+      return state.schedule.firstWhere((i) => i.type == type && !i.isCustom);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Find a meal item within a specific hour range
+  ScheduleItem? _findMealInRange(int startHour, int endHour) {
+    try {
+      return state.schedule.firstWhere((i) =>
+        i.type == ScheduleItemType.meal && !i.isCustom &&
+        _parseTimeToMin(i.time) >= startHour * 60 &&
+        _parseTimeToMin(i.time) < endHour * 60);
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<Map<String, String>> get healthInsights {
     final insights = <Map<String, String>>[];
     final profile = state.profile;
@@ -381,22 +451,88 @@ class AppNotifier extends Notifier<AppState> {
 
     final now = DateTime.now();
     final hour = now.hour;
+    final nowMin = hour * 60 + now.minute;
     final targets = profile.macroTargets;
 
+    // ── Find actual schedule times ──
+    final breakfastItem = _findMealInRange(0, 11);
+    final lunchItem = _findMealInRange(11, 16);
+    final dinnerItem = _findMealInRange(16, 24);
+    final workoutItem = _findScheduleItem(ScheduleItemType.workout);
+    final sleepItem = _findScheduleItem(ScheduleItemType.sleep);
+
+    final breakfastMin = breakfastItem != null ? _parseTimeToMin(breakfastItem.time) : null;
+    final lunchMin = lunchItem != null ? _parseTimeToMin(lunchItem.time) : null;
+    final dinnerMin = dinnerItem != null ? _parseTimeToMin(dinnerItem.time) : null;
+    final workoutMin = workoutItem != null ? _parseTimeToMin(workoutItem.time) : null;
+    final sleepMin = sleepItem != null ? _parseTimeToMin(sleepItem.time) : null;
+
+    // ── Schedule Timing Insights ──
+    // Late dinner warning
+    if (dinnerItem != null && dinnerMin != null) {
+      final dinnerHour = dinnerMin ~/ 60;
+      if (dinnerHour >= 22) {
+        insights.add({'type': 'warning', 'icon': '🍽️', 'title': 'Very late dinner (${_formatTime(dinnerItem.time)})',
+          'msg': 'Eating after 10 PM disrupts digestion, sleep quality & promotes fat storage. Try moving dinner to before 9 PM.'});
+      } else if (dinnerHour >= 21) {
+        insights.add({'type': 'info', 'icon': '🌙', 'title': 'Late dinner (${_formatTime(dinnerItem.time)})',
+          'msg': 'Dinner after 9 PM can affect sleep. Consider eating earlier for better digestion and rest.'});
+      }
+    }
+
+    // Late breakfast warning
+    if (breakfastItem != null && breakfastMin != null) {
+      final bfHour = breakfastMin ~/ 60;
+      if (bfHour >= 10) {
+        insights.add({'type': 'info', 'icon': '🌅', 'title': 'Late breakfast (${_formatTime(breakfastItem.time)})',
+          'msg': 'Eating breakfast after 10 AM slows metabolism. Try to eat within 1-2 hours of waking up.'});
+      }
+    }
+
+    // Workout too close to sleep
+    if (workoutItem != null && sleepItem != null && workoutMin != null && sleepMin != null) {
+      final gap = sleepMin - workoutMin;
+      if (gap > 0 && gap < 90) {
+        insights.add({'type': 'warning', 'icon': '⚠️', 'title': 'Workout too close to sleep',
+          'msg': 'Only ${gap}min between workout (${_formatTime(workoutItem.time)}) and sleep (${_formatTime(sleepItem.time)}). Exercise raises cortisol — aim for 2+ hours gap.'});
+      }
+    }
+
+    // Dinner too close to sleep
+    if (dinnerItem != null && sleepItem != null && dinnerMin != null && sleepMin != null) {
+      final gap = sleepMin - dinnerMin;
+      if (gap > 0 && gap < 60) {
+        insights.add({'type': 'warning', 'icon': '🛌', 'title': 'Dinner too close to bedtime',
+          'msg': 'Only ${gap}min between dinner (${_formatTime(dinnerItem.time)}) and sleep (${_formatTime(sleepItem.time)}). Eating right before bed causes acid reflux & poor sleep. Aim for 2+ hours gap.'});
+      }
+    }
+
+    // Meals too close together
+    if (breakfastMin != null && lunchMin != null) {
+      final gap = lunchMin - breakfastMin;
+      if (gap < 150 && gap > 0) {
+        insights.add({'type': 'info', 'icon': '⏱️', 'title': 'Breakfast & lunch too close',
+          'msg': 'Only ${gap ~/ 60}h ${gap % 60}m gap. Space meals 3-4 hours apart for better digestion and blood sugar control.'});
+      }
+    }
+    if (lunchMin != null && dinnerMin != null) {
+      final gap = dinnerMin - lunchMin;
+      if (gap > 480) {
+        insights.add({'type': 'info', 'icon': '🍎', 'title': 'Long gap between lunch & dinner',
+          'msg': '${gap ~/ 60}h ${gap % 60}m gap — consider a healthy snack in between to keep energy steady.'});
+      }
+    }
+
     // ── Sleep Analysis ──
-    final sleepItem = state.schedule.firstWhere(
-      (i) => i.type == ScheduleItemType.sleep,
-      orElse: () => ScheduleItem(id: '', time: '23:00', title: '', sub: '', icon: '', type: ScheduleItemType.sleep, calories: 0, protein: 0, carbs: 0, fat: 0, done: false, remOn: false, isCustom: false),
-    );
-    if (sleepItem.id.isNotEmpty) {
+    if (sleepItem != null && sleepItem.id.isNotEmpty) {
       final sleepHours = _parseSleepHours(sleepItem.sub);
       if (sleepHours != null && sleepHours > 0) {
         if (sleepHours < 4) {
           insights.add({'type': 'critical', 'icon': '🚨', 'title': 'Critical sleep deficit!',
-            'msg': 'Only ${sleepHours.toStringAsFixed(1)}h sleep. Rest is top priority today. Avoid heavy workouts. Stay extra hydrated and add vitamin C foods.'});
+            'msg': 'Only ${sleepHours.toStringAsFixed(1)}h sleep. Rest is top priority today. Avoid heavy workouts. Stay extra hydrated.'});
         } else if (sleepHours < 6) {
           insights.add({'type': 'warning', 'icon': '😴', 'title': 'Low sleep today',
-            'msg': '${sleepHours.toStringAsFixed(1)}h is below ideal. Take a 20min power nap if possible. Keep workout light. Add magnesium-rich foods (nuts, banana).'});
+            'msg': '${sleepHours.toStringAsFixed(1)}h is below ideal. Take a 20min power nap if possible. Keep workout light.'});
         } else if (sleepHours >= 8) {
           insights.add({'type': 'good', 'icon': '✅', 'title': 'Great sleep!',
             'msg': '${sleepHours.toStringAsFixed(1)}h — well rested! Perfect day for a challenging workout.'});
@@ -404,17 +540,21 @@ class AppNotifier extends Notifier<AppState> {
       }
     }
 
-    // ── Calorie Analysis ──
+    // ── Calorie Analysis (relative to schedule) ──
     final calsEaten = caloriesEaten;
     final calTarget = targets.calories;
     final calPct = calTarget > 0 ? calsEaten / calTarget : 0.0;
 
-    if (hour >= 14 && calPct < 0.3 && calTarget > 0) {
-      insights.add({'type': 'warning', 'icon': '🍽️', 'title': 'Very low calorie intake',
-        'msg': 'Only ${calsEaten.toInt()} of ${calTarget.toInt()} kcal by afternoon. Your body needs fuel — have a protein-rich meal soon.'});
-    } else if (hour >= 12 && calPct < 0.4 && calTarget > 0) {
-      insights.add({'type': 'info', 'icon': '🥗', 'title': 'Behind on calories',
-        'msg': '${(calPct * 100).toInt()}% of target eaten. Consider a nutritious snack or a hearty lunch.'});
+    // Use lunch time as reference instead of hardcoded hour
+    final calCheckMin = lunchMin ?? (13 * 60);
+    if (nowMin >= calCheckMin) {
+      if (calPct < 0.3 && calTarget > 0) {
+        insights.add({'type': 'warning', 'icon': '🍽️', 'title': 'Very low calorie intake',
+          'msg': 'Only ${calsEaten.toInt()} of ${calTarget.toInt()} kcal by now. Your body needs fuel — have a protein-rich meal soon.'});
+      } else if (calPct < 0.4 && calTarget > 0) {
+        insights.add({'type': 'info', 'icon': '🥗', 'title': 'Behind on calories',
+          'msg': '${(calPct * 100).toInt()}% of target eaten. Consider a nutritious snack or a hearty meal.'});
+      }
     }
     if (calPct > 1.0 && calPct <= 1.15 && calTarget > 0) {
       insights.add({'type': 'warning', 'icon': '⚠️', 'title': 'Calorie limit reached',
@@ -426,9 +566,11 @@ class AppNotifier extends Notifier<AppState> {
 
     // ── Protein Analysis ──
     final protPct = targets.protein > 0 ? proteinEaten / targets.protein : 0.0;
-    if (hour >= 15 && protPct < 0.4 && targets.protein > 0) {
+    // Use afternoon snack time or 3pm as reference
+    final protCheckMin = lunchMin != null ? lunchMin + 120 : 15 * 60;
+    if (nowMin >= protCheckMin && protPct < 0.4 && targets.protein > 0) {
       insights.add({'type': 'info', 'icon': '🥚', 'title': 'Protein is low',
-        'msg': 'Only ${proteinEaten.toInt()}g of ${targets.protein.toInt()}g target. Add eggs, chicken, or a protein shake to recover.'});
+        'msg': 'Only ${proteinEaten.toInt()}g of ${targets.protein.toInt()}g target. Add eggs, chicken, or a protein shake.'});
     }
 
     // ── Water Analysis ──
@@ -441,13 +583,13 @@ class AppNotifier extends Notifier<AppState> {
         'msg': '$wScore% hydrated. Keep a water bottle nearby and sip regularly.'});
     }
 
-    // ── Workout Analysis ──
+    // ── Workout Analysis (based on actual workout time) ──
     final workoutDone = state.schedule.any((i) => i.type == ScheduleItemType.workout && i.done);
-    final hasWorkout = state.schedule.any((i) => i.type == ScheduleItemType.workout);
-    if (hasWorkout && !workoutDone && hour >= 18) {
-      final sleepHours = _parseSleepHours(sleepItem.sub);
+    final hasWorkout = workoutItem != null;
+    if (hasWorkout && !workoutDone && workoutMin != null && nowMin >= workoutMin) {
+      final sleepHours = sleepItem != null ? _parseSleepHours(sleepItem.sub) : null;
       if (sleepHours != null && sleepHours >= 6) {
-        insights.add({'type': 'info', 'icon': '💪', 'title': 'Workout pending',
+        insights.add({'type': 'info', 'icon': '💪', 'title': 'Workout pending (${_formatTime(workoutItem.time)})',
           'msg': "You had good sleep — don't skip today's workout! Even 20 mins helps."});
       } else {
         insights.add({'type': 'info', 'icon': '🚶', 'title': 'Light activity suggested',
@@ -459,10 +601,13 @@ class AppNotifier extends Notifier<AppState> {
         'msg': 'Workout done but calories are low. Have a protein-rich snack within 30 min for recovery.'});
     }
 
-    // ── Meal Timing ──
-    final breakfastLogged = state.schedule.any((i) => i.isCustom && i.done && i.time == '07:30');
-    if (hour >= 10 && !breakfastLogged) {
-      insights.add({'type': 'info', 'icon': '🌅', 'title': 'No breakfast logged',
+    // ── Breakfast check (based on actual breakfast time) ──
+    final breakfastDone = breakfastItem?.done ?? false;
+    final breakfastLogged = state.schedule.any((i) => i.isCustom && i.done && breakfastMin != null &&
+        _parseTimeToMin(i.time) >= (breakfastMin - 60) && _parseTimeToMin(i.time) <= (breakfastMin + 60));
+    final breakfastCheckTime = breakfastMin != null ? breakfastMin + 150 : 10 * 60;
+    if (nowMin >= breakfastCheckTime && !breakfastDone && !breakfastLogged) {
+      insights.add({'type': 'info', 'icon': '🌅', 'title': 'No breakfast completed',
         'msg': 'Skipping breakfast slows metabolism. Even a banana or oats helps kickstart your day.'});
     }
 
