@@ -1,4 +1,4 @@
-package com.example.consistent
+package com.fynux.vitatrack
 
 import io.flutter.embedding.android.FlutterActivity
 
