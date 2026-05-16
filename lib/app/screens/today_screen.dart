@@ -20,6 +20,7 @@ class TodayScreen extends ConsumerStatefulWidget {
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   // Which meal period is currently expanded (auto-set by time of day)
   late String _expandedMeal;
+  int? _selectedGymDay; // null = show today
 
   @override
   void initState() {
@@ -816,7 +817,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final split = notifier.gymSplit;
     final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final todayIndex = (DateTime.now().weekday - 1) % 7;
-    final todayWorkout = split[dayNames[todayIndex]];
+    final viewingDay = _selectedGymDay ?? todayIndex;
+    final viewingWorkout = split[dayNames[viewingDay]];
+    final isViewingToday = viewingDay == todayIndex;
+    final dayFull = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -848,65 +852,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           ),
         ]),
         const SizedBox(height: 10),
-        // Today's focus card
-        if (todayWorkout != null)
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft, end: Alignment.bottomRight,
-                colors: [AppColors.accent.withValues(alpha: 0.15), AppColors.bg1],
-              ),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Text(todayWorkout['icon'] as String? ?? '\u{1F3CB}', style: const TextStyle(fontSize: 24)),
-                  const SizedBox(width: 10),
-                  Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("Today's Focus", style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-                      Text(todayWorkout['focus'] as String? ?? 'Workout',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.white)),
-                    ],
-                  )),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(dayNames[todayIndex],
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent)),
-                  ),
-                ]),
-                const SizedBox(height: 10),
-                // Muscle tags
-                Wrap(
-                  spacing: 6, runSpacing: 4,
-                  children: ((todayWorkout['muscles'] as List?)?.cast<String>() ?? []).map((m) =>
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.lavender.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(m, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.lavender)),
-                    ),
-                  ).toList(),
-                ),
-                const SizedBox(height: 8),
-                // Exercises with images
-                ..._buildExerciseCards(todayWorkout),
-              ],
-            ),
-          ),
-        const SizedBox(height: 10),
-        // Week overview row
+        // Week overview row (MOVED UP - so user picks day first)
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -917,42 +863,118 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (i) {
+              final isSelected = i == viewingDay;
               final isToday = i == todayIndex;
               final dayData = split[dayNames[i]];
               final focus = (dayData?['focus'] as String?) ?? 'Rest';
               final isRest = focus.toLowerCase().contains('rest');
-              return Expanded(child: Column(
-                children: [
-                  Text(dayNames[i], style: TextStyle(
-                    fontSize: 9, color: isToday ? AppColors.accent : AppColors.textSecondary,
-                    fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                  )),
-                  const SizedBox(height: 4),
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: isToday ? AppColors.accent.withValues(alpha: 0.15)
-                           : isRest ? AppColors.bg2 : AppColors.bg3,
-                      borderRadius: BorderRadius.circular(10),
-                      border: isToday ? Border.all(color: AppColors.accent, width: 1.5) : null,
+              return Expanded(child: GestureDetector(
+                onTap: () => setState(() => _selectedGymDay = i == todayIndex ? null : i),
+                child: Column(
+                  children: [
+                    Text(dayNames[i], style: TextStyle(
+                      fontSize: 9,
+                      color: isSelected ? AppColors.accent : isToday ? AppColors.green : AppColors.textSecondary,
+                      fontWeight: (isSelected || isToday) ? FontWeight.bold : FontWeight.normal,
+                    )),
+                    const SizedBox(height: 4),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: isSelected ? AppColors.accent.withValues(alpha: 0.2)
+                             : isRest ? AppColors.bg2 : AppColors.bg3,
+                        borderRadius: BorderRadius.circular(10),
+                        border: isSelected ? Border.all(color: AppColors.accent, width: 2)
+                             : isToday ? Border.all(color: AppColors.green.withValues(alpha: 0.5), width: 1) : null,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        dayData?['icon'] as String? ?? '\u{1F3CB}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      dayData?['icon'] as String? ?? '\u{1F3CB}',
-                      style: const TextStyle(fontSize: 14),
+                    const SizedBox(height: 3),
+                    Text(focus.length > 8 ? '${focus.substring(0, 7)}..' : focus,
+                      style: TextStyle(fontSize: 7, fontWeight: FontWeight.w600,
+                        color: isSelected ? AppColors.accent : AppColors.textMuted),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(focus.length > 8 ? '${focus.substring(0, 7)}..' : focus,
-                    style: TextStyle(fontSize: 7, fontWeight: FontWeight.w600,
-                      color: isToday ? AppColors.accent : AppColors.textMuted),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
               ));
             }),
           ),
         ),
+        const SizedBox(height: 10),
+        // Selected day's focus card
+        if (viewingWorkout != null)
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            child: Container(
+              key: ValueKey(viewingDay),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
+                  colors: [
+                    (isViewingToday ? AppColors.accent : AppColors.lavender).withValues(alpha: 0.15),
+                    AppColors.bg1,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: (isViewingToday ? AppColors.accent : AppColors.lavender).withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Text(viewingWorkout['icon'] as String? ?? '\u{1F3CB}', style: const TextStyle(fontSize: 24)),
+                    const SizedBox(width: 10),
+                    Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isViewingToday ? "Today's Focus" : dayFull[viewingDay],
+                          style: TextStyle(fontSize: 10, color: isViewingToday ? AppColors.textSecondary : AppColors.lavender)),
+                        Text(viewingWorkout['focus'] as String? ?? 'Workout',
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.white)),
+                      ],
+                    )),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: (isViewingToday ? AppColors.accent : AppColors.lavender).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(dayNames[viewingDay],
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700,
+                          color: isViewingToday ? AppColors.accent : AppColors.lavender)),
+                    ),
+                  ]),
+                  const SizedBox(height: 10),
+                  // Muscle tags
+                  Wrap(
+                    spacing: 6, runSpacing: 4,
+                    children: ((viewingWorkout['muscles'] as List?)?.cast<String>() ?? []).map((m) =>
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.lavender.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(m, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.lavender)),
+                      ),
+                    ).toList(),
+                  ),
+                  const SizedBox(height: 8),
+                  // Exercises with images
+                  ..._buildExerciseCards(viewingWorkout),
+                ],
+              ),
+            ),
+          ),
+
       ],
     );
   }
