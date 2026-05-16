@@ -1,7 +1,7 @@
 import '../../utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../constants/colors.dart';
 import '../../main.dart';
 import '../../store/app_provider.dart';
@@ -188,6 +188,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _row('Units', p.units == 'metric' ? 'Metric (kg, cm)' : 'Imperial (lbs, ft)', Icons.straighten, () =>
                 _editChoice('Units', p.units, {'metric': 'Metric (kg, cm)', 'imperial': 'Imperial (lbs, ft)'}, (v) =>
                   _save(p.copyWith(units: v)))),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const SizedBox();
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 20),
+                      child: Text(
+                        'Version ${snapshot.data!.version}',
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      ),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(height: 100),
             ]),
           )),
