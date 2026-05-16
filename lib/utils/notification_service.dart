@@ -386,6 +386,7 @@ class NotificationService {
   void startOverdueChecker({
     required List<dynamic> Function() getSchedule,
     required dynamic Function() getWaterConfig,
+    Set<String> skippedIds = const {},
   }) {
     stopOverdueChecker();
 
@@ -395,13 +396,13 @@ class NotificationService {
     // Check every 5 minutes
     _scheduleCheckTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       _resetIfNewDay();
-      _checkOverdueItems(getSchedule(), getWaterConfig());
+      _checkOverdueItems(getSchedule(), getWaterConfig(), skippedIds);
     });
 
     // Also run an immediate check
     Future.delayed(const Duration(seconds: 10), () {
       _resetIfNewDay();
-      _checkOverdueItems(getSchedule(), getWaterConfig());
+      _checkOverdueItems(getSchedule(), getWaterConfig(), skippedIds);
     });
   }
 
@@ -426,7 +427,7 @@ class NotificationService {
 
   /// Core logic: checks each schedule item and fires a notification
   /// if it's overdue by a grace period and not yet completed.
-  void _checkOverdueItems(List<dynamic> schedule, dynamic waterConfig) async {
+  void _checkOverdueItems(List<dynamic> schedule, dynamic waterConfig, [Set<String> skippedIds = const {}]) async {
     if (!_initialized) return;
 
     final now = DateTime.now();
@@ -441,6 +442,7 @@ class NotificationService {
       if (done) continue; // Already completed, skip
 
       final id = item.id as String;
+      if (skippedIds.contains(id)) continue; // User explicitly skipped
       final title = item.title as String;
       final time = item.time as String;
       final icon = item.icon as String;

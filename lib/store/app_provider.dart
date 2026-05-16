@@ -13,6 +13,7 @@ class AppState {
   final List<WeightEntry> weightEntries;
   final List<LogEntry> activityLog;
   final int streak;
+  final Set<String> skippedIds;
   
   AppState({
     this.profile,
@@ -23,6 +24,7 @@ class AppState {
     this.weightEntries = const [],
     this.activityLog = const [],
     this.streak = 0,
+    this.skippedIds = const {},
   });
 
   AppState copyWith({
@@ -34,6 +36,7 @@ class AppState {
     List<WeightEntry>? weightEntries,
     List<LogEntry>? activityLog,
     int? streak,
+    Set<String>? skippedIds,
   }) {
     return AppState(
       profile: profile ?? this.profile,
@@ -44,6 +47,7 @@ class AppState {
       weightEntries: weightEntries ?? this.weightEntries,
       activityLog: activityLog ?? this.activityLog,
       streak: streak ?? this.streak,
+      skippedIds: skippedIds ?? this.skippedIds,
     );
   }
 }
@@ -63,6 +67,15 @@ class AppNotifier extends Notifier<AppState> {
     final weightEntries = (_box.get('weightEntries') as List?)?.cast<WeightEntry>() ?? [];
     final activityLog = (_box.get('activityLog') as List?)?.cast<LogEntry>() ?? [];
     final streak = _box.get('streak', defaultValue: 0) as int;
+    final skippedRaw = (_box.get('skippedToday') as List?)?.cast<String>() ?? [];
+    final skippedDate = _box.get('skippedDate', defaultValue: '') as String;
+    final todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    // Reset skipped items at midnight
+    final skippedIds = skippedDate == todayStr ? skippedRaw.toSet() : <String>{};
+    if (skippedDate != todayStr) {
+      _box.put('skippedToday', <String>[]);
+      _box.put('skippedDate', todayStr);
+    }
 
     // Auto-sync schedule notifications on startup
     if (schedule.isNotEmpty) {
@@ -81,6 +94,7 @@ class AppNotifier extends Notifier<AppState> {
       weightEntries: weightEntries,
       activityLog: activityLog,
       streak: streak,
+      skippedIds: skippedIds,
     );
   }
 
@@ -181,6 +195,28 @@ class AppNotifier extends Notifier<AppState> {
     _startOverdueChecker();
   }
 
+
+  void skipScheduleItem(String id) {
+    final item = state.schedule.firstWhere((i) => i.id == id, orElse: () => state.schedule.first);
+    _addLog('Skipped: ${item.title}');
+    final newSkipped = {...state.skippedIds, id};
+    _box.put('skippedToday', newSkipped.toList());
+    _box.put('skippedDate', DateTime.now().toIso8601String().substring(0, 10));
+    _saveState(state.copyWith(skippedIds: newSkipped));
+    _startOverdueChecker();
+  }
+
+  void unskipScheduleItem(String id) {
+    final item = state.schedule.firstWhere((i) => i.id == id, orElse: () => state.schedule.first);
+    _addLog('Unskipped: ${item.title}');
+    final newSkipped = {...state.skippedIds}..remove(id);
+    _box.put('skippedToday', newSkipped.toList());
+    _saveState(state.copyWith(skippedIds: newSkipped));
+    _startOverdueChecker();
+  }
+
+  bool isSkipped(String id) => state.skippedIds.contains(id);
+
   void updateScheduleItem(String id, ScheduleItem updated) {
     final schedule = state.schedule.map((item) {
       return item.id == id ? updated : item;
@@ -236,6 +272,8 @@ class AppNotifier extends Notifier<AppState> {
   void resetDailySchedule() {
     final schedule = state.schedule.map((item) => item.copyWith(done: false)).toList();
     _saveState(state.copyWith(schedule: schedule));
+    _box.put('skippedToday', <String>[]);
+    _saveState(state.copyWith(skippedIds: {}));
     resetWater();
     clearActivityLog();
     _syncScheduleNotifications();
@@ -350,6 +388,7 @@ class AppNotifier extends Notifier<AppState> {
     NotificationService.instance.startOverdueChecker(
       getSchedule: () => state.schedule,
       getWaterConfig: () => state.waterConfig,
+      skippedIds: state.skippedIds,
     );
   }
 

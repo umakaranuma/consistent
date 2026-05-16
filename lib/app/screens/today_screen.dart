@@ -935,8 +935,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   Widget _buildDailyPlan(BuildContext context, AppState state, WidgetRef ref) {
     final schedule = state.schedule;
     final planOnly = schedule.where((i) => !i.isCustom).toList();
-    final doneCount = planOnly.where((i) => i.done).length;
-    final totalCount = planOnly.length;
+    final notifier = ref.read(appProvider.notifier);
+    final skippedIds = state.skippedIds;
+    final activeItems = planOnly.where((i) => !skippedIds.contains(i.id)).toList();
+    final doneCount = activeItems.where((i) => i.done).length;
+    final totalCount = activeItems.length;
+    final skippedCount = planOnly.where((i) => skippedIds.contains(i.id)).length;
     final pct = totalCount > 0 ? doneCount / totalCount : 0.0;
 
     // ALL plan items sorted by time
@@ -1096,23 +1100,31 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   Widget _buildRoutineItem(BuildContext context, ScheduleItem item,
       List<ScheduleItem> loggedFoods, int nowMin, WidgetRef ref) {
     final itemMin = _timeToMinutes(item.time);
-    final isOverdue = !item.done && nowMin > itemMin + 15;
-    final isCurrent = !item.done && nowMin >= itemMin - 5 && nowMin <= itemMin + 15;
+    final isSkipped = ref.read(appProvider.notifier).isSkipped(item.id);
+    final isOverdue = !item.done && !isSkipped && nowMin > itemMin + 15;
+    final isCurrent = !item.done && !isSkipped && nowMin >= itemMin - 5 && nowMin <= itemMin + 15;
     final typeColor = _getColorForType(item.type);
 
     return Column(children: [
       GestureDetector(
-        onTap: () => ref.read(appProvider.notifier).toggleScheduleItem(item.id),
-        onLongPress: () => _showEditScheduleDialog(item, ref),
+        onTap: () {
+          if (isSkipped) return; // Can't toggle skipped items
+          ref.read(appProvider.notifier).toggleScheduleItem(item.id);
+        },
+        onLongPress: () => _showItemOptionsSheet(context, item, isSkipped, ref),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
-            color: isCurrent ? AppColors.accent.withValues(alpha: 0.06) : Colors.transparent,
-            border: isOverdue
-                ? const Border(left: BorderSide(color: AppColors.red, width: 3))
-                : isCurrent
-                    ? Border(left: BorderSide(color: AppColors.accent, width: 3))
-                    : null,
+            color: isSkipped
+                ? AppColors.bg2.withValues(alpha: 0.3)
+                : isCurrent ? AppColors.accent.withValues(alpha: 0.06) : Colors.transparent,
+            border: isSkipped
+                ? null
+                : isOverdue
+                    ? const Border(left: BorderSide(color: AppColors.red, width: 3))
+                    : isCurrent
+                        ? Border(left: BorderSide(color: AppColors.accent, width: 3))
+                        : null,
           ),
           child: Row(children: [
             // Time
@@ -1138,12 +1150,24 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title, style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700,
-                  color: item.done ? AppColors.textMuted : AppColors.white,
-                  decoration: item.done ? TextDecoration.lineThrough : null,
-                  decorationColor: AppColors.textMuted,
-                )),
+                Row(children: [
+                  if (isSkipped)
+                    Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: AppColors.textMuted.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('SKIPPED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+                    ),
+                  Flexible(child: Text(item.title, style: TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w700,
+                    color: isSkipped ? AppColors.textMuted.withValues(alpha: 0.5) : item.done ? AppColors.textMuted : AppColors.white,
+                    decoration: (item.done || isSkipped) ? TextDecoration.lineThrough : null,
+                    decorationColor: AppColors.textMuted,
+                  ))),
+                ]),
                 if (item.sub.isNotEmpty)
                   Text(item.sub, style: TextStyle(fontSize: 10,
                     color: item.done ? AppColors.textMuted.withValues(alpha: 0.6) : AppColors.textSecondary),
@@ -1166,17 +1190,28 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 decoration: BoxDecoration(color: AppColors.red.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
                 child: const Text('LATE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.red)),
               ),
-            // Done check
-            Container(
-              width: 26, height: 26,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: item.done ? AppColors.green.withValues(alpha: 0.15) : Colors.transparent,
-                border: Border.all(
-                  color: item.done ? AppColors.green : AppColors.textMuted.withValues(alpha: 0.4), width: 2),
+            // Done check / Skip icon
+            if (isSkipped)
+              Container(
+                width: 26, height: 26,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.textMuted.withValues(alpha: 0.1),
+                  border: Border.all(color: AppColors.textMuted.withValues(alpha: 0.3), width: 2),
+                ),
+                child: const Icon(Icons.remove, size: 14, color: AppColors.textMuted),
+              )
+            else
+              Container(
+                width: 26, height: 26,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: item.done ? AppColors.green.withValues(alpha: 0.15) : Colors.transparent,
+                  border: Border.all(
+                    color: item.done ? AppColors.green : AppColors.textMuted.withValues(alpha: 0.4), width: 2),
+                ),
+                child: item.done ? const Icon(Icons.check_rounded, size: 14, color: AppColors.green) : null,
               ),
-              child: item.done ? const Icon(Icons.check_rounded, size: 14, color: AppColors.green) : null,
-            ),
           ]),
         ),
       ),
@@ -1218,6 +1253,116 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+
+  // --- Item Options (Long Press) ---
+  void _showItemOptionsSheet(BuildContext context, ScheduleItem item, bool isSkipped, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        decoration: const BoxDecoration(
+          color: AppColors.bg1,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(width: 40, height: 4, decoration: BoxDecoration(
+              color: AppColors.textMuted, borderRadius: BorderRadius.circular(2))),
+            const SizedBox(height: 16),
+            Row(children: [
+              Text(item.icon, style: const TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+                  Text('${item.time} \u{00B7} ${item.sub}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              )),
+            ]),
+            const SizedBox(height: 20),
+            // Skip / Unskip
+            _optionTile(
+              icon: isSkipped ? Icons.undo_rounded : Icons.skip_next_rounded,
+              label: isSkipped ? 'Unskip for today' : 'Skip for today',
+              subtitle: isSkipped ? 'Bring this activity back to your routine' : "Not doing this today? Skip it without penalty",
+              color: isSkipped ? AppColors.accent : AppColors.amber,
+              onTap: () {
+                if (isSkipped) {
+                  ref.read(appProvider.notifier).unskipScheduleItem(item.id);
+                } else {
+                  ref.read(appProvider.notifier).skipScheduleItem(item.id);
+                }
+                Navigator.pop(ctx);
+              },
+            ),
+            const SizedBox(height: 8),
+            // Edit
+            _optionTile(
+              icon: Icons.edit_outlined,
+              label: 'Edit time & details',
+              subtitle: 'Change the time or description',
+              color: AppColors.accent,
+              onTap: () {
+                Navigator.pop(ctx);
+                _showEditScheduleDialog(item, ref);
+              },
+            ),
+            const SizedBox(height: 8),
+            // Delete
+            _optionTile(
+              icon: Icons.delete_outline,
+              label: 'Remove from plan',
+              subtitle: 'Delete this activity from today',
+              color: AppColors.red,
+              onTap: () {
+                ref.read(appProvider.notifier).deleteScheduleItem(item.id);
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _optionTile({required IconData icon, required String label, required String subtitle, required Color color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Row(children: [
+          Container(
+            width: 36, height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color)),
+              Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+            ],
+          )),
+          Icon(Icons.chevron_right, size: 18, color: color.withValues(alpha: 0.5)),
+        ]),
       ),
     );
   }
