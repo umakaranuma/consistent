@@ -806,67 +806,362 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     );
   }
 
-  // â”€â”€â”€ Weekly Workout Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // --- Weekly Workout Split (Editable) ---
   Widget _buildWeeklyWorkoutRow(UserProfile profile) {
-    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    List<String> plan;
-
-    if (profile.mode == AppMode.gym) {
-      switch (profile.gymGoal) {
-        case GymGoal.fatLoss:
-          plan = ['Strength', 'Cardio', 'Strength', 'Cardio', 'Strength', 'HIIT', 'Rest']; break;
-        case GymGoal.muscleGain:
-          plan = ['Push', 'Pull', 'Legs', 'Push', 'Pull', 'Legs', 'Rest']; break;
-        case GymGoal.maintenance:
-          plan = ['Full Body', 'Rest', 'Full Body', 'Rest', 'Full Body', 'Walk', 'Rest']; break;
-        case GymGoal.recomp:
-          plan = ['Upper', 'Lower', 'Upper', 'Lower', 'HIIT', 'Walk', 'Rest']; break;
-        default:
-          plan = ['HIIT', 'Strength', 'HIIT', 'Strength', 'HIIT', 'Walk', 'Rest'];
-      }
-    } else {
-      plan = ['HIIT', 'Strength', 'HIIT', 'Strength', 'HIIT', 'Walk', 'Rest'];
+    if (profile.mode != AppMode.gym) {
+      return const SizedBox.shrink();
     }
-
+    final notifier = ref.read(appProvider.notifier);
+    final split = notifier.gymSplit;
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final todayIndex = (DateTime.now().weekday - 1) % 7;
+    final todayWorkout = split[dayNames[todayIndex]];
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.bg1,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border1),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: List.generate(7, (i) {
-          final isToday = i == todayIndex;
-          return Column(
-            children: [
-              Text(dayNames[i], style: TextStyle(
-                fontSize: 10, color: isToday ? AppColors.accent : AppColors.textSecondary,
-                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-              )),
-              const SizedBox(height: 6),
-              Container(
-                width: 38, height: 38,
-                decoration: BoxDecoration(
-                  color: isToday ? AppColors.accent.withOpacity(0.15) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                  border: isToday ? Border.all(color: AppColors.accent, width: 1) : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(plan[i], style: TextStyle(
-                  fontSize: 8, color: isToday ? AppColors.accent : AppColors.textMuted,
-                  fontWeight: FontWeight.w600,
-                ), textAlign: TextAlign.center),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Row(children: [
+          const Icon(Icons.fitness_center, size: 18, color: AppColors.accent),
+          const SizedBox(width: 8),
+          const Text('Gym Split', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+          const Spacer(),
+          InkWell(
+            onTap: () => _showEditGymSplitSheet(context),
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.edit, size: 12, color: AppColors.accent),
+                  SizedBox(width: 4),
+                  Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accent)),
+                ],
+              ),
+            ),
+          ),
+        ]),
+        const SizedBox(height: 10),
+        // Today's focus card
+        if (todayWorkout != null)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft, end: Alignment.bottomRight,
+                colors: [AppColors.accent.withValues(alpha: 0.15), AppColors.bg1],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: AppColors.accent.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Text(todayWorkout['icon'] as String? ?? '\u{1F3CB}', style: const TextStyle(fontSize: 24)),
+                  const SizedBox(width: 10),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Today's Focus", style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                      Text(todayWorkout['focus'] as String? ?? 'Workout',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.white)),
+                    ],
+                  )),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(dayNames[todayIndex],
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.accent)),
+                  ),
+                ]),
+                const SizedBox(height: 10),
+                // Muscle tags
+                Wrap(
+                  spacing: 6, runSpacing: 4,
+                  children: ((todayWorkout['muscles'] as List?)?.cast<String>() ?? []).map((m) =>
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.lavender.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(m, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.lavender)),
+                    ),
+                  ).toList(),
+                ),
+                const SizedBox(height: 8),
+                // Exercises
+                Wrap(
+                  spacing: 6, runSpacing: 4,
+                  children: ((todayWorkout['exercises'] as List?)?.cast<String>() ?? []).map((e) =>
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.bg3,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: AppColors.border1),
+                      ),
+                      child: Text(e, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
+                    ),
+                  ).toList(),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 10),
+        // Week overview row
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.bg1,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.border1),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(7, (i) {
+              final isToday = i == todayIndex;
+              final dayData = split[dayNames[i]];
+              final focus = (dayData?['focus'] as String?) ?? 'Rest';
+              final isRest = focus.toLowerCase().contains('rest');
+              return Expanded(child: Column(
+                children: [
+                  Text(dayNames[i], style: TextStyle(
+                    fontSize: 9, color: isToday ? AppColors.accent : AppColors.textSecondary,
+                    fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                  )),
+                  const SizedBox(height: 4),
+                  Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: isToday ? AppColors.accent.withValues(alpha: 0.15)
+                           : isRest ? AppColors.bg2 : AppColors.bg3,
+                      borderRadius: BorderRadius.circular(10),
+                      border: isToday ? Border.all(color: AppColors.accent, width: 1.5) : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      dayData?['icon'] as String? ?? '\u{1F3CB}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(focus.length > 8 ? '${focus.substring(0, 7)}..' : focus,
+                    style: TextStyle(fontSize: 7, fontWeight: FontWeight.w600,
+                      color: isToday ? AppColors.accent : AppColors.textMuted),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ));
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // --- Edit Gym Split Sheet ---
+  void _showEditGymSplitSheet(BuildContext context) {
+    final notifier = ref.read(appProvider.notifier);
+    final split = Map<String, Map<String, dynamic>>.from(notifier.gymSplit);
+    final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayFull = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setBS) => Container(
+          constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
+          decoration: const BoxDecoration(
+            color: AppColors.bg1,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(margin: const EdgeInsets.only(top: 12),
+                width: 40, height: 4, decoration: BoxDecoration(
+                  color: AppColors.textMuted, borderRadius: BorderRadius.circular(2))),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(children: [
+                  const Icon(Icons.fitness_center, size: 20, color: AppColors.accent),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text('Edit Weekly Split', style: TextStyle(
+                    fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white))),
+                  TextButton(
+                    onPressed: () {
+                      notifier.resetGymSplit();
+                      Navigator.pop(ctx);
+                    },
+                    child: const Text('Reset', style: TextStyle(fontSize: 12, color: AppColors.red)),
+                  ),
+                ]),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: 7,
+                  itemBuilder: (ctx, i) {
+                    final day = dayNames[i];
+                    final data = split[day] ?? {'focus': 'Rest', 'muscles': [], 'exercises': []};
+                    final focus = data['focus'] as String? ?? 'Rest';
+                    final muscles = ((data['muscles'] as List?) ?? []).cast<String>();
+                    final exercises = ((data['exercises'] as List?) ?? []).cast<String>();
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.bg2,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Text(dayFull[i], style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white)),
+                            const Spacer(),
+                            InkWell(
+                              onTap: () => _showEditDayDialog(ctx, day, focus, muscles, exercises, (f, m, e) {
+                                setBS(() {
+                                  split[day] = {'focus': f, 'muscles': m, 'exercises': e};
+                                });
+                                notifier.setGymSplitDay(day, f, m, e);
+                              }),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                  Icon(Icons.edit, size: 12, color: AppColors.accent),
+                                  SizedBox(width: 4),
+                                  Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accent)),
+                                ]),
+                              ),
+                            ),
+                          ]),
+                          const SizedBox(height: 6),
+                          Text(focus, style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent)),
+                          if (muscles.isNotEmpty) ...[
+                            const SizedBox(height: 4),
+                            Wrap(spacing: 4, children: muscles.map((m) =>
+                              Text(m, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                            ).toList()),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
-          );
-        }),
+          ),
+        ),
       ),
     );
   }
+
+  void _showEditDayDialog(BuildContext ctx, String day, String focus, List<String> muscles,
+      List<String> exercises, void Function(String, List<String>, List<String>) onSave) {
+    final focusCtrl = TextEditingController(text: focus);
+    final musclesCtrl = TextEditingController(text: muscles.join(', '));
+    final exercisesCtrl = TextEditingController(text: exercises.join(', '));
+
+    showDialog(
+      context: ctx,
+      builder: (dctx) => AlertDialog(
+        backgroundColor: AppColors.bg2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('$day - Workout', style: const TextStyle(
+          fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: focusCtrl,
+                style: const TextStyle(color: AppColors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Focus (e.g. Legs & Abs)',
+                  labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  filled: true, fillColor: AppColors.bg3,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: musclesCtrl,
+                style: const TextStyle(color: AppColors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  labelText: 'Muscles (comma separated)',
+                  hintText: 'Quads, Hamstrings, Abs',
+                  hintStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  filled: true, fillColor: AppColors.bg3,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: exercisesCtrl,
+                style: const TextStyle(color: AppColors.white, fontSize: 14),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Exercises (comma separated)',
+                  hintText: 'Squats, Leg Press, Lunges',
+                  hintStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  filled: true, fillColor: AppColors.bg3,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dctx),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final f = focusCtrl.text.trim();
+              if (f.isEmpty) return;
+              final m = musclesCtrl.text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+              final e = exercisesCtrl.text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+              onSave(f, m, e);
+              Navigator.pop(dctx);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   // â”€â”€â”€ Log Food Buttons (Gradient) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildLogFoodButtons(BuildContext context) {

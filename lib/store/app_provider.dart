@@ -441,6 +441,64 @@ class AppNotifier extends Notifier<AppState> {
     _box.put('customFoods', foods);
   }
 
+
+  // --- Gym Weekly Split ---
+  static const Map<String, Map<String, dynamic>> defaultGymSplit = {
+    'Mon': {'focus': 'Legs & Abs', 'icon': '\u{1F9B5}', 'muscles': ['Quads', 'Hamstrings', 'Calves', 'Abs'], 'exercises': ['Squats', 'Leg Press', 'Lunges', 'Leg Curls', 'Crunches', 'Planks']},
+    'Tue': {'focus': 'Chest & Biceps', 'icon': '\u{1F4AA}', 'muscles': ['Chest', 'Biceps'], 'exercises': ['Bench Press', 'Incline Dumbbell Press', 'Cable Flyes', 'Barbell Curls', 'Hammer Curls']},
+    'Wed': {'focus': 'Back & Triceps', 'icon': '\u{1F3CB}', 'muscles': ['Back', 'Triceps'], 'exercises': ['Deadlifts', 'Lat Pulldown', 'Bent Over Rows', 'Tricep Pushdown', 'Skull Crushers']},
+    'Thu': {'focus': 'Shoulders & Abs', 'icon': '\u{1F9D8}', 'muscles': ['Shoulders', 'Abs'], 'exercises': ['Overhead Press', 'Lateral Raises', 'Front Raises', 'Face Pulls', 'Hanging Leg Raises']},
+    'Fri': {'focus': 'Full Body', 'icon': '\u{26A1}', 'muscles': ['Full Body', 'Compound'], 'exercises': ['Squats', 'Bench Press', 'Deadlifts', 'Pull-ups', 'Dips', 'Planks']},
+    'Sat': {'focus': 'Cardio & HIIT', 'icon': '\u{1F3C3}', 'muscles': ['Cardio', 'Endurance'], 'exercises': ['Running', 'Jump Rope', 'Burpees', 'Mountain Climbers', 'Battle Ropes']},
+    'Sun': {'focus': 'Rest Day', 'icon': '\u{1F6CC}', 'muscles': ['Recovery'], 'exercises': ['Stretching', 'Light Walk', 'Foam Rolling']},
+  };
+
+  Map<String, Map<String, dynamic>> get gymSplit {
+    final raw = _box.get('gymSplit');
+    if (raw == null) return Map.from(defaultGymSplit);
+    try {
+      final result = <String, Map<String, dynamic>>{};
+      final map = Map<String, dynamic>.from(raw as Map);
+      for (final entry in map.entries) {
+        result[entry.key] = Map<String, dynamic>.from(entry.value as Map);
+      }
+      return result;
+    } catch (_) {
+      return Map.from(defaultGymSplit);
+    }
+  }
+
+  void setGymSplitDay(String day, String focus, List<String> muscles, List<String> exercises) {
+    final split = gymSplit;
+    final icons = {
+      'Legs': '\u{1F9B5}', 'Chest': '\u{1F4AA}', 'Back': '\u{1F3CB}',
+      'Shoulders': '\u{1F9D8}', 'Full Body': '\u{26A1}', 'Cardio': '\u{1F3C3}',
+      'Rest': '\u{1F6CC}', 'Arms': '\u{1F4AA}', 'Abs': '\u{1F9D8}',
+    };
+    String icon = '\u{1F3CB}';
+    for (final m in muscles) {
+      if (icons.containsKey(m)) { icon = icons[m]!; break; }
+    }
+    split[day] = {
+      'focus': focus,
+      'icon': icon,
+      'muscles': muscles,
+      'exercises': exercises,
+    };
+    _box.put('gymSplit', split);
+  }
+
+  void resetGymSplit() {
+    _box.put('gymSplit', Map.from(defaultGymSplit));
+  }
+
+  Map<String, dynamic>? get todayGymWorkout {
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final todayIndex = (DateTime.now().weekday - 1) % 7;
+    final split = gymSplit;
+    return split[days[todayIndex]];
+  }
+
   void removeCustomFood(String id) {
     final foods = customFoods..removeWhere((f) => f['id'] == id);
     _box.put('customFoods', foods);
