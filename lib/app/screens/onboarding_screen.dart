@@ -8,7 +8,7 @@ import '../../store/types.dart';
 import '../../utils/bmi_engine.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
-  const OnboardingScreen({Key? key}) : super(key: key);
+  const OnboardingScreen({super.key});
 
   @override
   ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
@@ -37,7 +37,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _workEndCtrl = TextEditingController(text: '18:00');
   final _sleepCtrl = TextEditingController(text: '23:00');
   double _waterInterval = 60;
-  double _mlPerReminder = 250;
+  final double _mlPerReminder = 250;
 
   // Step 5 — Notifications
   bool _pushEnabled = true;
@@ -141,13 +141,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           children: [
             // ─── Progress Dots ─────────────
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Row(
                 children: [
                   if (_step > 0)
                     GestureDetector(
                       onTap: _back,
-                      child: const Icon(Icons.arrow_back_ios, color: AppColors.textSecondary, size: 18),
+                      child: Icon(Icons.arrow_back_ios, color: AppColors.textSecondary, size: 18),
                     ),
                   if (_step > 0) const SizedBox(width: 16),
                   ...List.generate(5, (i) => Expanded(
@@ -190,7 +190,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ═══════════════════════════════════════════════════════════
   Widget _buildWelcome() {
     return Padding(
-      padding: const EdgeInsets.all(30),
+      padding: EdgeInsets.all(30),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -201,14 +201,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             alignment: Alignment.center,
-            child: const Icon(Icons.favorite_rounded, color: AppColors.accent, size: 40),
+            child: Icon(Icons.favorite_rounded, color: AppColors.accent, size: 40),
           ),
-          const SizedBox(height: 30),
-          const Text('VitaTrack', style: TextStyle(
+          SizedBox(height: 30),
+          Text('VitaTrack', style: TextStyle(
             fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.white,
           )),
-          const SizedBox(height: 12),
-          const Text(
+          SizedBox(height: 12),
+          Text(
             'Your personal health & wellness\ndaily planner',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
@@ -230,11 +230,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final ideal = BmiEngine.getIdealWeightRange(double.tryParse(_heightCtrl.text) ?? 170);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Tell us about you', style: TextStyle(
+          Text('Tell us about you', style: TextStyle(
             fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.white,
           )),
           const SizedBox(height: 24),
@@ -256,10 +256,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           _textField(_weightCtrl, '70', isNumber: true),
           _inputLabel('Goal weight (${_units == 'metric' ? 'kg' : 'lbs'})'),
           _textField(_goalWeightCtrl, '65', isNumber: true),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // BMI Preview
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.bg2,
               borderRadius: BorderRadius.circular(16),
@@ -268,21 +268,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('BMI Preview', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                const SizedBox(height: 6),
+                Text('BMI Preview', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                SizedBox(height: 6),
                 Row(
                   children: [
                     Text(bmi.toStringAsFixed(1), style: TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold,
                       color: _bmiColor(cat),
                     )),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Text('— $label', style: TextStyle(fontSize: 13, color: _bmiColor(cat))),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text('Ideal range: ${ideal['min']}–${ideal['max']} kg',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
               ],
             ),
           ),
@@ -298,11 +298,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   // ═══════════════════════════════════════════════════════════
   Widget _buildMode() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Choose your mode', style: TextStyle(
+          Text('Choose your mode', style: TextStyle(
             fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.white,
           )),
           const SizedBox(height: 24),
@@ -367,22 +367,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         child: Row(
           children: [
             Icon(icon, color: selected ? AppColors.accent : AppColors.textSecondary, size: 28),
-            const SizedBox(width: 16),
+            SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold,
-                    color: selected ? AppColors.white : AppColors.textPrimary,
+                    color: selected ? AppColors.pureWhite : AppColors.textPrimary,
                   )),
-                  const SizedBox(height: 4),
-                  Text(desc, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4)),
+                  SizedBox(height: 4),
+                  Text(desc, style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4)),
                 ],
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle, color: AppColors.accent, size: 22),
+              Icon(Icons.check_circle, color: AppColors.accent, size: 22),
           ],
         ),
       ),
@@ -408,15 +408,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final waterTarget = BmiEngine.getWaterTarget(w, _mode);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Your daily targets', style: TextStyle(
+          Text('Your daily targets', style: TextStyle(
             fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.white,
           )),
-          const SizedBox(height: 4),
-          const Text('Auto-calculated from your stats',
+          SizedBox(height: 4),
+          Text('Auto-calculated from your stats',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
           const SizedBox(height: 24),
           // Calorie target
@@ -426,13 +426,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           // Water target
           _targetDisplay('Daily water target', '${waterTarget.toInt()} ml',
             'Based on ${_mode == AppMode.gym ? "40" : "35"}ml × your weight'),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _inputLabel('Water reminder interval'),
           const SizedBox(height: 8),
           _chipRow(['60', '90', '120', '180'], _waterInterval.toInt().toString(), (v) {
             setState(() => _waterInterval = double.parse(v));
           }, labels: ['60 min', '90 min', '2 hrs', '3 hrs']),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _inputLabel('Activity level'),
           const SizedBox(height: 8),
           Wrap(
@@ -450,7 +450,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 () => setState(() => _activityLevel = 'very_active')),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           _inputLabel('Work start time'),
           _textField(_workStartCtrl, '09:00'),
           _inputLabel('Work end time'),
@@ -466,7 +466,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Widget _targetDisplay(String label, String value, String hint) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg2,
         borderRadius: BorderRadius.circular(16),
@@ -478,12 +478,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-              const SizedBox(height: 2),
-              Text(hint, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+              Text(label, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              SizedBox(height: 2),
+              Text(hint, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
             ],
           ),
-          Text(value, style: const TextStyle(
+          Text(value, style: TextStyle(
             fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.accent,
           )),
         ],
@@ -513,35 +513,35 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final waterTarget = BmiEngine.getWaterTarget(w, _mode);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Enable notifications', style: TextStyle(
+          Text('Enable notifications', style: TextStyle(
             fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.white,
           )),
-          const SizedBox(height: 16),
-          const Text('VitaTrack sends smart reminders:', style: TextStyle(
+          SizedBox(height: 16),
+          Text('VitaTrack sends smart reminders:', style: TextStyle(
             fontSize: 13, color: AppColors.textSecondary,
           )),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           _bulletPoint('Water every ${_waterInterval.toInt()} minutes'),
           _bulletPoint('Meal time alerts'),
           _bulletPoint('Workout reminders'),
           _bulletPoint('Sleep reminder'),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           SwitchListTile(
             value: _pushEnabled,
             onChanged: (v) => setState(() => _pushEnabled = v),
-            title: const Text('Allow notifications', style: TextStyle(color: AppColors.white)),
-            activeColor: AppColors.accent,
+            title: Text('Allow notifications', style: TextStyle(color: AppColors.white)),
+            activeThumbColor: AppColors.accent,
             tileColor: AppColors.bg2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           // Plan summary
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.bg2,
               borderRadius: BorderRadius.circular(16),
@@ -550,7 +550,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Your plan summary', style: TextStyle(
+                Text('Your plan summary', style: TextStyle(
                   fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white,
                 )),
                 const SizedBox(height: 12),
@@ -564,7 +564,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: 30),
           _primaryBtn("Finish setup — Let's go! 🚀", _finish),
         ],
       ),
@@ -573,12 +573,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Widget _summaryRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
+          Text(label, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.white)),
         ],
       ),
     );
@@ -586,11 +586,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Widget _bulletPoint(String text) {
     return Padding(
-      padding: const EdgeInsets.only(left: 8, bottom: 6),
+      padding: EdgeInsets.only(left: 8, bottom: 6),
       child: Row(
         children: [
-          const Text('•  ', style: TextStyle(color: AppColors.accent)),
-          Text(text, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          Text('•  ', style: TextStyle(color: AppColors.accent)),
+          Text(text, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -608,7 +608,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 0,
         ),
-        child: Text(label, style: const TextStyle(
+        child: Text(label, style: TextStyle(
           fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white,
         )),
       ),
@@ -617,8 +617,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Widget _inputLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(top: 14, bottom: 6),
-      child: Text(text, style: const TextStyle(
+      padding: EdgeInsets.only(top: 14, bottom: 6),
+      child: Text(text, style: TextStyle(
         fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textSecondary,
       )),
     );
@@ -628,24 +628,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     return TextField(
       controller: ctrl,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+      style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
       onChanged: (_) => setState(() {}),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textMuted),
+        hintStyle: TextStyle(color: AppColors.textMuted),
         filled: true,
         fillColor: AppColors.bg3,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border2, width: 0.5),
+          borderSide: BorderSide(color: AppColors.border2, width: 0.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border2, width: 0.5),
+          borderSide: BorderSide(color: AppColors.border2, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.accent, width: 1),
+          borderSide: BorderSide(color: AppColors.accent, width: 1),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       ),

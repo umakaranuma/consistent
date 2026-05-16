@@ -1,7 +1,9 @@
 import '../../utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../../constants/colors.dart';
+import '../../main.dart';
 import '../../store/app_provider.dart';
 import '../../store/types.dart';
 import '../../utils/bmi_engine.dart';
@@ -21,18 +23,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(expandedHeight: 60, floating: false, pinned: true,
-            backgroundColor: AppColors.bg0,
-            title: const Text('Profile & Settings', style: TextStyle(fontSize: 18)),
-            centerTitle: true),
-          SliverToBoxAdapter(child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(children: [
-              const SizedBox(height: 10),
-              _profileHeader(p),
-              const SizedBox(height: 24),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                const SizedBox(height: 20),
+                Text('Profile & Settings', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                const SizedBox(height: 20),
+                _profileHeader(p),
+                const SizedBox(height: 24),
               _bmiCard(p),
               const SizedBox(height: 20),
 
@@ -110,23 +113,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   context: context,
                   backgroundColor: Colors.transparent,
                   builder: (ctx) => Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: const BoxDecoration(
+                    padding: EdgeInsets.all(24),
+                    decoration: BoxDecoration(
                       color: AppColors.bg2,
                       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.warning_amber_rounded, color: AppColors.amber, size: 48),
-                        const SizedBox(height: 16),
-                        const Text('Reset Recommended Plan?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
-                        const SizedBox(height: 8),
-                        const Text('This will overwrite your current schedule and macros with the recommended default values based on your profile.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-                        const SizedBox(height: 24),
+                        Icon(Icons.warning_amber_rounded, color: AppColors.amber, size: 48),
+                        SizedBox(height: 16),
+                        Text('Reset Recommended Plan?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
+                        SizedBox(height: 8),
+                        Text('This will overwrite your current schedule and macros with the recommended default values based on your profile.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                        SizedBox(height: 24),
                         Row(
                           children: [
-                            Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)))),
+                            Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)))),
                             const SizedBox(width: 16),
                             Expanded(
                               child: ElevatedButton(
@@ -135,7 +138,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   Navigator.pop(ctx);
                                   _snack('Plan regenerated from your profile!');
                                 },
-                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.amber, foregroundColor: AppColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.amber, foregroundColor: AppColors.pureWhite, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
                                 child: const Text('Reset', style: TextStyle(fontWeight: FontWeight.bold)),
                               ),
                             ),
@@ -169,6 +172,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 20),
 
               _section('App'),
+              Consumer(builder: (context, ref, child) {
+                final tm = ref.watch(themeProvider);
+                final modeStr = tm == ThemeMode.light ? 'Light' : tm == ThemeMode.dark ? 'Dark' : 'System Default';
+                return _row('Theme', modeStr, Icons.palette_outlined, () {
+                  _showSheet('Theme', (pop) => StatefulBuilder(builder: (ctx, setS) => Column(mainAxisSize: MainAxisSize.min, children: [
+                    _choiceTile('System Default', tm == ThemeMode.system, () { ref.read(themeProvider.notifier).setTheme(ThemeMode.system); setS((){}); }),
+                    _choiceTile('Dark Mode', tm == ThemeMode.dark, () { ref.read(themeProvider.notifier).setTheme(ThemeMode.dark); setS((){}); }),
+                    _choiceTile('Light Mode', tm == ThemeMode.light, () { ref.read(themeProvider.notifier).setTheme(ThemeMode.light); setS((){}); }),
+                    const SizedBox(height: 16),
+                    _sheetBtn('Done', () => pop()),
+                  ])));
+                });
+              }),
               _row('Units', p.units == 'metric' ? 'Metric (kg, cm)' : 'Imperial (lbs, ft)', Icons.straighten, () =>
                 _editChoice('Units', p.units, {'metric': 'Metric (kg, cm)', 'imperial': 'Imperial (lbs, ft)'}, (v) =>
                   _save(p.copyWith(units: v)))),
@@ -176,6 +192,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ]),
           )),
         ],
+        ),
       ),
     );
   }
@@ -207,7 +224,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     String selected = current;
     _showSheet(label, (pop) => StatefulBuilder(builder: (ctx, setS) => Column(mainAxisSize: MainAxisSize.min, children: [
       ...opts.entries.map((e) => _choiceTile(e.value, selected == e.key, () => setS(() => selected = e.key))),
-      const SizedBox(height: 16),
+      SizedBox(height: 16),
       _sheetBtn('Save', () { onSave(selected); pop(); _snack('$label updated'); }),
     ])));
   }
@@ -217,7 +234,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final picked = await showTimePicker(context: context,
       initialTime: TimeOfDay(hour: int.tryParse(parts[0]) ?? 8, minute: int.tryParse(parts[1]) ?? 0),
       builder: (ctx, child) => Theme(data: ThemeData.dark().copyWith(
-        colorScheme: const ColorScheme.dark(primary: AppColors.accent, surface: AppColors.bg2)), child: child!));
+        colorScheme: ColorScheme.dark(primary: AppColors.accent, surface: AppColors.bg2)), child: child!));
     if (picked != null) {
       final t = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
       onSave(t); _snack('$label set to $t');
@@ -268,13 +285,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showModalBottomSheet(context: context, backgroundColor: Colors.transparent, isScrollControlled: true,
       builder: (_) => Container(
         padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 30),
-        decoration: const BoxDecoration(color: AppColors.bg2,
+        decoration: BoxDecoration(color: AppColors.bg2,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: 16),
+          Center(child: Container(width: 40, height: 4, margin: EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(2)))),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
-          const SizedBox(height: 16),
+          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
+          SizedBox(height: 16),
           builder(() => Navigator.pop(context)),
         ]),
       ));
@@ -282,28 +299,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _sheetField(TextEditingController ctrl, String hint, {bool isNum = false}) => TextField(
     controller: ctrl, autofocus: true,
-    keyboardType: isNum ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
-    style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
-    decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: AppColors.textMuted),
+    keyboardType: isNum ? TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+    style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
+    decoration: InputDecoration(hintText: hint, hintStyle: TextStyle(color: AppColors.textMuted),
       filled: true, fillColor: AppColors.bg3,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.accent))));
+        borderSide: BorderSide(color: AppColors.accent))));
 
   Widget _sheetBtn(String label, VoidCallback onTap) => SizedBox(width: double.infinity, height: 48,
     child: ElevatedButton(onPressed: onTap,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.accent,
-        foregroundColor: AppColors.white,
+        foregroundColor: AppColors.pureWhite,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), 
         elevation: 0,
       ),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.white))));
+      child: Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.white))));
 
   Widget _choiceTile(String label, bool selected, VoidCallback onTap) => GestureDetector(onTap: onTap,
     child: Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      margin: EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: selected ? AppColors.accent.withValues(alpha: 0.15) : AppColors.bg3,
         borderRadius: BorderRadius.circular(14),
@@ -311,26 +328,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Row(children: [
         Expanded(child: Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600,
           color: selected ? AppColors.accent : AppColors.textPrimary))),
-        if (selected) const Icon(Icons.check_circle, color: AppColors.accent, size: 20),
+        if (selected) Icon(Icons.check_circle, color: AppColors.accent, size: 20),
       ])));
 
   Widget _modeTile(String title, String desc, IconData icon, bool selected, VoidCallback onTap) => GestureDetector(
     onTap: onTap, child: Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: selected ? AppColors.accent.withValues(alpha: 0.12) : AppColors.bg3,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: selected ? AppColors.accent : AppColors.border1, width: selected ? 1.5 : 1)),
       child: Row(children: [
         Icon(icon, color: selected ? AppColors.accent : AppColors.textSecondary, size: 24),
-        const SizedBox(width: 14),
+        SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold,
-            color: selected ? AppColors.white : AppColors.textPrimary)),
-          const SizedBox(height: 2),
-          Text(desc, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+            color: selected ? AppColors.pureWhite : AppColors.textPrimary)),
+          SizedBox(height: 2),
+          Text(desc, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
         ])),
-        if (selected) const Icon(Icons.check_circle, color: AppColors.accent, size: 20),
+        if (selected) Icon(Icons.check_circle, color: AppColors.accent, size: 20),
       ])));
 
   // ═══════════════════ UI WIDGETS ═══════════════════
@@ -344,13 +361,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           decoration: BoxDecoration(color: AppColors.accentBg, borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.accent, width: 2)),
           alignment: Alignment.center,
-          child: Text(initials, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.accent))),
-        const SizedBox(width: 16),
+          child: Text(initials, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.accent))),
+        SizedBox(width: 16),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
-            Text(p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
-            const SizedBox(width: 6),
-            const Icon(Icons.edit, color: AppColors.textMuted, size: 14),
+            Text(p.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
+            SizedBox(width: 6),
+            Icon(Icons.edit, color: AppColors.textMuted, size: 14),
           ]),
           const SizedBox(height: 4),
           Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -371,53 +388,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Text(p.bmi.toStringAsFixed(1), style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: c)),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Text(BmiEngine.getBmiLabel(p.bmiCategory), style: TextStyle(fontSize: 14, color: c, fontWeight: FontWeight.w500)),
         ]),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Stack(children: [
           Container(height: 8, decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(4))),
           FractionallySizedBox(widthFactor: bar / 100,
             child: Container(height: 8, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4)))),
         ]),
-        const SizedBox(height: 6),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: const [
+        SizedBox(height: 6),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text('<18.5', style: TextStyle(fontSize: 9, color: AppColors.bmiUnder)),
           Text('18.5-25', style: TextStyle(fontSize: 9, color: AppColors.bmiNormal)),
           Text('25-30', style: TextStyle(fontSize: 9, color: AppColors.bmiOver)),
           Text('>30', style: TextStyle(fontSize: 9, color: AppColors.bmiObese)),
         ]),
-        const SizedBox(height: 6),
-        Text('Ideal: ${ideal['min']}–${ideal['max']} kg', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+        SizedBox(height: 6),
+        Text('Ideal: ${ideal['min']}–${ideal['max']} kg', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
       ]));
   }
 
-  Widget _section(String t) => Padding(padding: const EdgeInsets.only(bottom: 8),
+  Widget _section(String t) => Padding(padding: EdgeInsets.only(bottom: 8),
     child: Align(alignment: Alignment.centerLeft,
-      child: Text(t, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary))));
+      child: Text(t, style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textSecondary))));
 
   Widget _row(String label, String value, IconData icon, VoidCallback? onTap) => GestureDetector(
     onTap: onTap,
-    child: Container(margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+    child: Container(margin: EdgeInsets.only(bottom: 6),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(color: AppColors.bg1, borderRadius: BorderRadius.circular(14)),
       child: Row(children: [
         Icon(icon, color: AppColors.textSecondary, size: 20),
-        const SizedBox(width: 12),
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.white))),
-        Text(value, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-        if (onTap != null) ...[const SizedBox(width: 6),
-          const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18)],
+        SizedBox(width: 12),
+        Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: AppColors.white))),
+        Text(value, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        if (onTap != null) ...[SizedBox(width: 6),
+          Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18)],
       ])));
 
   Widget _toggle(String label, bool value, IconData icon, Function(bool) onChanged) => Container(
-    margin: const EdgeInsets.only(bottom: 6),
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+    margin: EdgeInsets.only(bottom: 6),
+    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 6),
     decoration: BoxDecoration(color: AppColors.bg1, borderRadius: BorderRadius.circular(14)),
     child: Row(children: [
       Icon(icon, color: AppColors.textSecondary, size: 20),
-      const SizedBox(width: 12),
-      Expanded(child: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.white))),
+      SizedBox(width: 12),
+      Expanded(child: Text(label, style: TextStyle(fontSize: 14, color: AppColors.white))),
       Switch(value: value, onChanged: (v) { onChanged(v); _snack('$label ${v ? "enabled" : "disabled"}'); },
         activeColor: AppColors.accent),
     ]));

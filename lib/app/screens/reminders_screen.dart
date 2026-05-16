@@ -56,42 +56,40 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 60,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.bg0,
-            title: const Text('Reminders', style: TextStyle(fontSize: 18)),
-            centerTitle: true,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline, color: AppColors.accent),
-                onPressed: () => _showAddReminderModal(),
-              ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 10),
-                  // ─── Water Reminder Summary ──────
-                  _buildWaterReminderCard(state),
-                  const SizedBox(height: 20),
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Reminders', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                        IconButton(
+                          icon: Icon(Icons.add_circle, color: AppColors.accent, size: 32),
+                          onPressed: () => _showAddReminderModal(),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 16),
+                    // ─── Water Reminder Summary ──────
+                    _buildWaterReminderCard(state),
+                  SizedBox(height: 20),
                   // ─── Manual Reminders ────────────
-                  const Text('Your reminders', style: TextStyle(
+                  Text('Your reminders', style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
                   )),
-                  const SizedBox(height: 12),
+                  SizedBox(height: 12),
                   if (state.reminders.isEmpty)
                     Container(
-                      padding: const EdgeInsets.all(30),
+                      padding: EdgeInsets.all(30),
                       alignment: Alignment.center,
-                      child: const Text('No reminders yet.\nTap + to add one.',
+                      child: Text('No reminders yet.\nTap + to add one.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.textMuted)),
                     )
@@ -103,6 +101,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -118,7 +117,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     final end = config.reminderEndTime;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -132,9 +131,9 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.water_drop, color: AppColors.blue, size: 20),
-                  const SizedBox(width: 8),
-                  const Text('Water reminders', style: TextStyle(
+                  Icon(Icons.water_drop, color: AppColors.blue, size: 20),
+                  SizedBox(width: 8),
+                  Text('Water reminders', style: TextStyle(
                     fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white,
                   )),
                 ],
@@ -177,12 +176,12 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
 
   Widget _infoChip(String text) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: AppColors.bg3,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(text, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+      child: Text(text, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
     );
   }
 
@@ -196,13 +195,13 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 8),
+        padding: EdgeInsets.only(right: 20),
+        margin: EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
           color: AppColors.red.withOpacity(0.2),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Icon(Icons.delete_outline, color: AppColors.red),
+        child: Icon(Icons.delete_outline, color: AppColors.red),
       ),
       onDismissed: (_) => ref.read(appProvider.notifier).deleteReminder(r.id),
       child: Container(
@@ -223,7 +222,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
               alignment: Alignment.center,
               child: Icon(typeIcon, color: typeColor, size: 18),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +232,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                     color: r.enabled ? AppColors.white : AppColors.textSecondary,
                   )),
                   Text('${r.time} · ${r.repeat}',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                 ],
               ),
             ),
@@ -272,7 +271,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       builder: (_) => StatefulBuilder(
         builder: (ctx, setModalState) => Container(
           padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(ctx).viewInsets.bottom + 30),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.bg2,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -280,27 +279,27 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Add reminder', style: TextStyle(
+              Text('Add reminder', style: TextStyle(
                 fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
               )),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               TextField(
                 controller: titleCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Reminder title',
-                  hintStyle: const TextStyle(color: AppColors.textMuted),
+                  hintStyle: TextStyle(color: AppColors.textMuted),
                   filled: true, fillColor: AppColors.bg3,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               TextField(
                 controller: timeCtrl,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Time (HH:MM)',
-                  hintStyle: const TextStyle(color: AppColors.textMuted),
+                  hintStyle: TextStyle(color: AppColors.textMuted),
                   filled: true, fillColor: AppColors.bg3,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 ),

@@ -24,8 +24,8 @@ class UiHelpers {
         content: Row(
           children: [
             Icon(baseIcon, color: baseColor, size: 20),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message, style: const TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.w500))),
+            SizedBox(width: 10),
+            Expanded(child: Text(message, style: TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.w500))),
           ],
         ),
         backgroundColor: AppColors.bg3,

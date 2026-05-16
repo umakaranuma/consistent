@@ -141,7 +141,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                    color: isSelected ? AppColors.white : AppColors.textSecondary,
+                    color: isSelected ? AppColors.pureWhite : AppColors.textSecondary,
                   ),
                 ),
               ),
@@ -215,7 +215,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       backgroundColor: AppColors.bg0,
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        titlePadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         title: Row(
           children: [
             Expanded(
@@ -223,19 +223,19 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('$greeting, ${profile.name}', style: const TextStyle(
+                  Text('$greeting, ${profile.name}', style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
                   )),
                   if (streak > 0)
                     Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      margin: EdgeInsets.only(top: 4),
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.amberDark,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: AppColors.amber.withOpacity(0.3)),
                       ),
-                      child: Text('🔥 $streak day streak', style: const TextStyle(
+                      child: Text('🔥 $streak day streak', style: TextStyle(
                         fontSize: 9, color: AppColors.amber, fontWeight: FontWeight.w500,
                       )),
                     ),
@@ -247,7 +247,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               backgroundColor: AppColors.accentBg,
               child: Text(
                 profile.name.isNotEmpty ? profile.name[0].toUpperCase() : 'U',
-                style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -269,7 +269,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final double normalized = ((profile.bmi - minBmi) / range).clamp(0.0, 1.0);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -281,30 +281,30 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('BMI & Weight', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('BMI & Weight', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               Row(
                 children: [
                   InkWell(
                     onTap: () => _showWeightLogger(context, ref),
                     borderRadius: BorderRadius.circular(8),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Row(
                         children: [
-                          const Icon(Icons.add_circle_outline, size: 14, color: AppColors.accentSoft),
-                          const SizedBox(width: 4),
+                          Icon(Icons.add_circle_outline, size: 14, color: AppColors.accentSoft),
+                          SizedBox(width: 4),
                           Text('Log Weight', style: TextStyle(fontSize: 12, color: AppColors.accentSoft, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   InkWell(
                     onTap: () => Navigator.push(
                       context, 
-                      MaterialPageRoute(builder: (_) => const BmiDetailsScreen()),
+                      MaterialPageRoute(builder: (_) => BmiDetailsScreen()),
                     ),
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                       child: Text('Detail â€º', style: TextStyle(fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.bold)),
                     ),
@@ -329,7 +329,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Segmented BMI bar
           LayoutBuilder(
             builder: (context, constraints) {
@@ -343,7 +343,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       children: [
                         Positioned(
                           left: (constraints.maxWidth * normalized) - 5,
-                          child: const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.white),
+                          child: Icon(Icons.arrow_drop_down, size: 16, color: AppColors.white),
                         ),
                       ],
                     ),
@@ -385,9 +385,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
-        const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white)),
+        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+        SizedBox(height: 2),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white)),
       ],
     );
   }
@@ -404,27 +404,27 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         return Padding(
           padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
           child: Container(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.8),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.bg1,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Log New Weight', style: TextStyle(
+                Text('Log New Weight', style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
                 )),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 TextField(
                   controller: weightCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.accent),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.accent),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     suffixText: 'kg',
-                    suffixStyle: const TextStyle(fontSize: 16, color: AppColors.textSecondary),
+                    suffixStyle: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                     filled: true,
                     fillColor: AppColors.bg2,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
@@ -449,44 +449,44 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.accent,
-                    minimumSize: const Size(double.infinity, 50),
+                    minimumSize: Size(double.infinity, 50),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   ),
-                  child: const Text('Save & Update Profile', style: TextStyle(
+                  child: Text('Save & Update Profile', style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
                   )),
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 // Weight History
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Recent History', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white)),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Expanded(
                   child: Consumer(
                     builder: (context, ref, child) {
                       final entries = ref.watch(appProvider).weightEntries.reversed.toList();
                       if (entries.isEmpty) {
-                        return const Center(child: Text('No history yet.', style: TextStyle(color: AppColors.textMuted)));
+                        return Center(child: Text('No history yet.', style: TextStyle(color: AppColors.textMuted)));
                       }
                       return ListView.builder(
                         itemCount: entries.length,
                         itemBuilder: (ctx, i) {
                           final e = entries[i];
                           return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.all(12),
+                            margin: EdgeInsets.only(bottom: 8),
+                            padding: EdgeInsets.all(12),
                             decoration: BoxDecoration(color: AppColors.bg2, borderRadius: BorderRadius.circular(12)),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(e.date, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                Text(e.date, style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                                 Row(
                                   children: [
-                                    Text('${e.weight.toStringAsFixed(1)} kg', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.white)),
-                                    const SizedBox(width: 12),
-                                    Text('BMI ${e.bmi.toStringAsFixed(1)}', style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                                    Text('${e.weight.toStringAsFixed(1)} kg', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.white)),
+                                    SizedBox(width: 12),
+                                    Text('BMI ${e.bmi.toStringAsFixed(1)}', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                                   ],
                                 ),
                               ],
@@ -563,12 +563,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(value, style: TextStyle(
             fontSize: 13, fontWeight: FontWeight.w800, color: color,
           )),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
         ],
       ),
     );
@@ -615,19 +615,19 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     Text('${(pct * 100).toInt()}%', style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.w800, color: ringColor,
                     )),
-                    const Text('eaten', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                    Text('eaten', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 20),
+          SizedBox(width: 20),
           // Stats column
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Calories', style: TextStyle(
+                Text('Calories', style: TextStyle(
                   fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
                 )),
                 const SizedBox(height: 12),
@@ -655,12 +655,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         Container(width: 3, height: 16, decoration: BoxDecoration(
           color: color, borderRadius: BorderRadius.circular(2),
         )),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-        const Spacer(),
+        SizedBox(width: 8),
+        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Spacer(),
         Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color)),
-        const SizedBox(width: 3),
-        Text(unit, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+        SizedBox(width: 3),
+        Text(unit, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
       ],
     );
   }
@@ -668,7 +668,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   // â”€â”€â”€ Macro Card (Visual bars with percentage) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildMacroCard(double pEaten, double cEaten, double fEaten, MacroTargets t, AppMode mode) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(22),
@@ -681,14 +681,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(mode == AppMode.gym ? 'Macros' : 'Nutrition',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: AppColors.bg3, borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text('${(pEaten * 4 + cEaten * 4 + fEaten * 9).toInt()} kcal from macros',
-                  style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                  style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
               ),
             ],
           ),
@@ -711,13 +711,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         Row(
           children: [
             Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
-            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-            const Spacer(),
+            SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Spacer(),
             Text('${current.toInt()}g', style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w700, color: over ? AppColors.red : color,
             )),
-            Text(' / ${target.toInt()}g', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+            Text(' / ${target.toInt()}g', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -752,7 +752,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final pct = target > 0 ? (consumed / target * 100).clamp(0, 100).toInt() : 0;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -764,7 +764,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Water intake', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('Water intake', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               InkWell(
                 onTap: () {
                   if (config != null) {
@@ -773,31 +773,31 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Row(
                     children: [
                       Text('${consumed.toInt()} / ${target.toInt()} ml',
-                        style: const TextStyle(fontSize: 12, color: AppColors.accentSoft, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.edit, size: 12, color: AppColors.accentSoft),
+                        style: TextStyle(fontSize: 12, color: AppColors.accentSoft, fontWeight: FontWeight.bold)),
+                      SizedBox(width: 4),
+                      Icon(Icons.edit, size: 12, color: AppColors.accentSoft),
                     ],
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0,
               minHeight: 8,
               backgroundColor: AppColors.bg3,
-              valueColor: const AlwaysStoppedAnimation(AppColors.accent),
+              valueColor: AlwaysStoppedAnimation(AppColors.accent),
             ),
           ),
-          const SizedBox(height: 6),
-          Text('$pct% of daily target', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+          SizedBox(height: 6),
+          Text('$pct% of daily target', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
           const SizedBox(height: 12),
           // Quick-add row
           Row(
@@ -822,32 +822,32 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         double currentTarget = config.target;
         return StatefulBuilder(builder: (context, setState) {
           return Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
               color: AppColors.bg1,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Daily Water Target', style: TextStyle(
+                Text('Daily Water Target', style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
                 )),
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, size: 32, color: AppColors.textSecondary),
+                      icon: Icon(Icons.remove_circle_outline, size: 32, color: AppColors.textSecondary),
                       onPressed: currentTarget > 500 ? () => setState(() => currentTarget -= 250) : null,
                     ),
-                    const SizedBox(width: 16),
-                    Text('${currentTarget.toInt()} ml', style: const TextStyle(
+                    SizedBox(width: 16),
+                    Text('${currentTarget.toInt()} ml', style: TextStyle(
                       fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.accent,
                     )),
-                    const SizedBox(width: 16),
+                    SizedBox(width: 16),
                     IconButton(
-                      icon: const Icon(Icons.add_circle_outline, size: 32, color: AppColors.textSecondary),
+                      icon: Icon(Icons.add_circle_outline, size: 32, color: AppColors.textSecondary),
                       onPressed: currentTarget < 8000 ? () => setState(() => currentTarget += 250) : null,
                     ),
                   ],
@@ -884,14 +884,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         onTap: () => ref.read(appProvider.notifier).addWater(ml),
         borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.accent.withOpacity(0.12),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppColors.accent.withOpacity(0.2)),
           ),
           alignment: Alignment.center,
-          child: Text(label, style: const TextStyle(
+          child: Text(label, style: TextStyle(
             fontSize: 12, color: AppColors.accent, fontWeight: FontWeight.w600,
           )),
         ),
@@ -918,20 +918,20 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       children: [
         // Header
         Row(children: [
-          const Icon(Icons.fitness_center, size: 18, color: AppColors.accent),
-          const SizedBox(width: 8),
-          const Text('Gym Split', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
-          const Spacer(),
+          Icon(Icons.fitness_center, size: 18, color: AppColors.accent),
+          SizedBox(width: 8),
+          Text('Gym Split', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+          Spacer(),
           InkWell(
             onTap: () => _showEditGymSplitSheet(context),
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.edit, size: 12, color: AppColors.accent),
@@ -1020,8 +1020,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    Text(viewingWorkout['icon'] as String? ?? '\u{1F3CB}', style: const TextStyle(fontSize: 24)),
-                    const SizedBox(width: 10),
+                    Text(viewingWorkout['icon'] as String? ?? '\u{1F3CB}', style: TextStyle(fontSize: 24)),
+                    SizedBox(width: 10),
                     Expanded(child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -1029,7 +1029,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           isViewingToday ? "Today's Focus" : dayFull[viewingDay],
                           style: TextStyle(fontSize: 10, color: isViewingToday ? AppColors.textSecondary : AppColors.lavender)),
                         Text(viewingWorkout['focus'] as String? ?? 'Workout',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.white)),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.white)),
                       ],
                     )),
                     Container(
@@ -1043,18 +1043,18 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           color: isViewingToday ? AppColors.accent : AppColors.lavender)),
                     ),
                   ]),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
                   // Muscle tags
                   Wrap(
                     spacing: 6, runSpacing: 4,
                     children: ((viewingWorkout['muscles'] as List?)?.cast<String>() ?? []).map((m) =>
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: AppColors.lavender.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text(m, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.lavender)),
+                        child: Text(m, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.lavender)),
                       ),
                     ).toList(),
                   ),
@@ -1097,7 +1097,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           // Exercise image
           if (imageUrl.isNotEmpty)
             ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(13)),
+              borderRadius: BorderRadius.horizontal(left: Radius.circular(13)),
               child: Image.network(
                 imageUrl,
                 width: 72, height: 72,
@@ -1106,7 +1106,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   width: 72, height: 72,
                   color: AppColors.bg3,
                   alignment: Alignment.center,
-                  child: const Icon(Icons.fitness_center, size: 24, color: AppColors.textMuted),
+                  child: Icon(Icons.fitness_center, size: 24, color: AppColors.textMuted),
                 ),
               ),
             )
@@ -1115,23 +1115,23 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               width: 72, height: 72,
               decoration: BoxDecoration(
                 color: AppColors.bg3,
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(13)),
+                borderRadius: BorderRadius.horizontal(left: Radius.circular(13)),
               ),
               alignment: Alignment.center,
-              child: const Icon(Icons.fitness_center, size: 24, color: AppColors.textMuted),
+              child: Icon(Icons.fitness_center, size: 24, color: AppColors.textMuted),
             ),
-          const SizedBox(width: 10),
+          SizedBox(width: 10),
           // Details
           Expanded(child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.white)),
+                Text(name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.white)),
                 if (target.isNotEmpty)
-                  Text(target, style: const TextStyle(fontSize: 10, color: AppColors.accent)),
+                  Text(target, style: TextStyle(fontSize: 10, color: AppColors.accent)),
                 if (desc.isNotEmpty)
-                  Text(desc, style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+                  Text(desc, style: TextStyle(fontSize: 9, color: AppColors.textMuted),
                     maxLines: 2, overflow: TextOverflow.ellipsis),
               ],
             ),
@@ -1139,13 +1139,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           // Sets badge
           if (sets.isNotEmpty)
             Container(
-              margin: const EdgeInsets.only(right: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              margin: EdgeInsets.only(right: 10),
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(sets, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
+              child: Text(sets, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accent)),
             ),
         ]),
       );
@@ -1166,29 +1166,29 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setBS) => Container(
           constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.85),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.bg1,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(margin: const EdgeInsets.only(top: 12),
+              Container(margin: EdgeInsets.only(top: 12),
                 width: 40, height: 4, decoration: BoxDecoration(
                   color: AppColors.textMuted, borderRadius: BorderRadius.circular(2))),
               Padding(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.all(20),
                 child: Row(children: [
-                  const Icon(Icons.fitness_center, size: 20, color: AppColors.accent),
-                  const SizedBox(width: 10),
-                  const Expanded(child: Text('Edit Weekly Split', style: TextStyle(
+                  Icon(Icons.fitness_center, size: 20, color: AppColors.accent),
+                  SizedBox(width: 10),
+                  Expanded(child: Text('Edit Weekly Split', style: TextStyle(
                     fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white))),
                   TextButton(
                     onPressed: () {
                       notifier.resetGymSplit();
                       Navigator.pop(ctx);
                     },
-                    child: const Text('Reset', style: TextStyle(fontSize: 12, color: AppColors.red)),
+                    child: Text('Reset', style: TextStyle(fontSize: 12, color: AppColors.red)),
                   ),
                 ]),
               ),
@@ -1204,8 +1204,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     final exercises = ((data['exercises'] as List?) ?? []).cast<String>();
 
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      padding: const EdgeInsets.all(14),
+                      margin: EdgeInsets.only(bottom: 10),
+                      padding: EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: AppColors.bg2,
                         borderRadius: BorderRadius.circular(16),
@@ -1215,7 +1215,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(children: [
-                            Text(dayFull[i], style: const TextStyle(
+                            Text(dayFull[i], style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.white)),
                             const Spacer(),
                             InkWell(
@@ -1227,12 +1227,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                               }),
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: AppColors.accent.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                                child: Row(mainAxisSize: MainAxisSize.min, children: [
                                   Icon(Icons.edit, size: 12, color: AppColors.accent),
                                   SizedBox(width: 4),
                                   Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accent)),
@@ -1240,13 +1240,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                               ),
                             ),
                           ]),
-                          const SizedBox(height: 6),
-                          Text(focus, style: const TextStyle(
+                          SizedBox(height: 6),
+                          Text(focus, style: TextStyle(
                             fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.accent)),
                           if (muscles.isNotEmpty) ...[
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Wrap(spacing: 4, children: muscles.map((m) =>
-                              Text(m, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                              Text(m, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
                             ).toList()),
                           ],
                         ],
@@ -1274,7 +1274,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       builder: (dctx) => AlertDialog(
         backgroundColor: AppColors.bg2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('$day - Workout', style: const TextStyle(
+        title: Text('$day - Workout', style: TextStyle(
           fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
         content: SingleChildScrollView(
           child: Column(
@@ -1282,37 +1282,37 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             children: [
               TextField(
                 controller: focusCtrl,
-                style: const TextStyle(color: AppColors.white, fontSize: 14),
+                style: TextStyle(color: AppColors.white, fontSize: 14),
                 decoration: InputDecoration(
                   labelText: 'Focus (e.g. Legs & Abs)',
-                  labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  labelStyle: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   filled: true, fillColor: AppColors.bg3,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               TextField(
                 controller: musclesCtrl,
-                style: const TextStyle(color: AppColors.white, fontSize: 14),
+                style: TextStyle(color: AppColors.white, fontSize: 14),
                 decoration: InputDecoration(
                   labelText: 'Muscles (comma separated)',
                   hintText: 'Quads, Hamstrings, Abs',
-                  hintStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                  labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  hintStyle: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  labelStyle: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   filled: true, fillColor: AppColors.bg3,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: 10),
               TextField(
                 controller: exercisesCtrl,
-                style: const TextStyle(color: AppColors.white, fontSize: 14),
+                style: TextStyle(color: AppColors.white, fontSize: 14),
                 maxLines: 3,
                 decoration: InputDecoration(
                   labelText: 'Exercises (comma separated)',
                   hintText: 'Squats, Leg Press, Lunges',
-                  hintStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                  labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  hintStyle: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  labelStyle: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   filled: true, fillColor: AppColors.bg3,
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 ),
@@ -1323,7 +1323,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1338,7 +1338,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               backgroundColor: AppColors.accent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+            child: Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1349,10 +1349,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   // â”€â”€â”€ Log Food Buttons (Gradient) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildLogFoodButtons(BuildContext context) {
     final meals = [
-      {'icon': '🍳', 'label': 'Breakfast', 'key': 'breakfast', 'color': const Color(0xFF2E5A1A)},
-      {'icon': '🍛', 'label': 'Lunch', 'key': 'lunch', 'color': const Color(0xFF5A3A1A)},
-      {'icon': '🍽', 'label': 'Dinner', 'key': 'dinner', 'color': const Color(0xFF1A2E5A)},
-      {'icon': '🥜', 'label': 'Snack', 'key': 'snack', 'color': const Color(0xFF3A1A5A)},
+      {'icon': '🍳', 'label': 'Breakfast', 'key': 'breakfast', 'color': Color(0xFF2E5A1A)},
+      {'icon': '🍛', 'label': 'Lunch', 'key': 'lunch', 'color': Color(0xFF5A3A1A)},
+      {'icon': '🍽', 'label': 'Dinner', 'key': 'dinner', 'color': Color(0xFF1A2E5A)},
+      {'icon': '🥜', 'label': 'Snack', 'key': 'snack', 'color': Color(0xFF3A1A5A)},
     ];
 
     return Column(
@@ -1360,15 +1360,15 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       children: [
         Row(
           children: [
-            const Icon(Icons.add_circle, size: 18, color: AppColors.accent),
-            const SizedBox(width: 8),
-            const Text('Log your food', style: TextStyle(
+            Icon(Icons.add_circle, size: 18, color: AppColors.accent),
+            SizedBox(width: 8),
+            Text('Log your food', style: TextStyle(
               fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
             )),
           ],
         ),
-        const SizedBox(height: 4),
-        const Text('Tap a meal to add foods â€” calories auto-tracked',
+        SizedBox(height: 4),
+        Text('Tap a meal to add foods â€” calories auto-tracked',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         const SizedBox(height: 14),
         Row(
@@ -1393,9 +1393,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   ),
                   child: Column(
                     children: [
-                      Text(m['icon'] as String, style: const TextStyle(fontSize: 26)),
-                      const SizedBox(height: 6),
-                      Text(m['label'] as String, style: const TextStyle(
+                      Text(m['icon'] as String, style: TextStyle(fontSize: 26)),
+                      SizedBox(height: 6),
+                      Text(m['label'] as String, style: TextStyle(
                         fontSize: 11, color: AppColors.white, fontWeight: FontWeight.w600,
                       )),
                     ],
@@ -1443,16 +1443,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       children: [
         // Progress header
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.bg1, borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.border1),
           ),
           child: Column(children: [
             Row(children: [
-              const Icon(Icons.today_rounded, size: 20, color: AppColors.accent),
-              const SizedBox(width: 10),
-              const Text("Today's Routine", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.white)),
+              Icon(Icons.today_rounded, size: 20, color: AppColors.accent),
+              SizedBox(width: 10),
+              Text("Today's Routine", style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.white)),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1491,13 +1491,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             onTap: () => _showAddActivityDialog(ref),
             borderRadius: BorderRadius.circular(14),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               decoration: BoxDecoration(
                 color: AppColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.accent.withValues(alpha: 0.25)),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.add_circle_outline, size: 18, color: AppColors.accent),
@@ -1538,30 +1538,30 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
             child: Row(children: [
-              Text(period.emoji, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
+              Text(period.emoji, style: TextStyle(fontSize: 18)),
+              SizedBox(width: 8),
               Text(period.label, style: TextStyle(
                 fontSize: 15, fontWeight: FontWeight.w800,
                 color: isCurrentPeriod ? AppColors.accent : AppColors.textSecondary,
               )),
               if (isCurrentPeriod) ...[
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: AppColors.accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text('NOW', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.accent)),
+                  child: Text('NOW', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: AppColors.accent)),
                 ),
               ],
-              const Spacer(),
+              Spacer(),
               Text('${items.where((i) => i.done).length}/${items.length}',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600,
                   color: items.every((i) => i.done) ? AppColors.green : AppColors.textMuted)),
             ]),
           ),
-          const Divider(height: 1, color: AppColors.border1),
+          Divider(height: 1, color: AppColors.border1),
           ...items.map((item) {
             final itemFoods = (item.type == ScheduleItemType.meal || item.type == ScheduleItemType.snack)
                 ? loggedFoods.where((f) => f.time == item.time).toList()
@@ -1591,7 +1591,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         },
         onLongPress: () => _showItemOptionsSheet(context, item, isSkipped, ref),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isSkipped
                 ? AppColors.bg2.withValues(alpha: 0.3)
@@ -1599,7 +1599,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             border: isSkipped
                 ? null
                 : isOverdue
-                    ? const Border(left: BorderSide(color: AppColors.red, width: 3))
+                    ? Border(left: BorderSide(color: AppColors.red, width: 3))
                     : isCurrent
                         ? Border(left: BorderSide(color: AppColors.accent, width: 3))
                         : null,
@@ -1623,7 +1623,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               alignment: Alignment.center,
               child: Text(item.icon, style: const TextStyle(fontSize: 16)),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             // Title + sub
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1631,13 +1631,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 Row(children: [
                   if (isSkipped)
                     Container(
-                      margin: const EdgeInsets.only(right: 6),
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      margin: EdgeInsets.only(right: 6),
+                      padding: EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                       decoration: BoxDecoration(
                         color: AppColors.textMuted.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text('SKIPPED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
+                      child: Text('SKIPPED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
                     ),
                   Flexible(child: Text(item.title, style: TextStyle(
                     fontSize: 13, fontWeight: FontWeight.w700,
@@ -1652,7 +1652,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     maxLines: 1, overflow: TextOverflow.ellipsis),
                 if (item.calories > 0 && !item.done)
                   Padding(
-                    padding: const EdgeInsets.only(top: 2),
+                    padding: EdgeInsets.only(top: 2),
                     child: Wrap(spacing: 4, children: [
                       _chipSmall('${item.calories.toInt()} kcal', AppColors.accent),
                       if (item.protein > 0) _chipSmall('P:${item.protein.toInt()}g', AppColors.lavender),
@@ -1663,10 +1663,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             // Overdue badge
             if (isOverdue)
               Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                margin: EdgeInsets.only(right: 8),
+                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(color: AppColors.red.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
-                child: const Text('LATE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.red)),
+                child: Text('LATE', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.red)),
               ),
             // Done check / Skip icon
             if (isSkipped)
@@ -1677,7 +1677,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   color: AppColors.textMuted.withValues(alpha: 0.1),
                   border: Border.all(color: AppColors.textMuted.withValues(alpha: 0.3), width: 2),
                 ),
-                child: const Icon(Icons.remove, size: 14, color: AppColors.textMuted),
+                child: Icon(Icons.remove, size: 14, color: AppColors.textMuted),
               )
             else
               Container(
@@ -1688,7 +1688,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   border: Border.all(
                     color: item.done ? AppColors.green : AppColors.textMuted.withValues(alpha: 0.4), width: 2),
                 ),
-                child: item.done ? const Icon(Icons.check_rounded, size: 14, color: AppColors.green) : null,
+                child: item.done ? Icon(Icons.check_rounded, size: 14, color: AppColors.green) : null,
               ),
           ]),
         ),
@@ -1701,21 +1701,21 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
   Widget _buildLoggedFoodRow(ScheduleItem item, WidgetRef ref) {
     return Container(
-      margin: const EdgeInsets.only(left: 58, right: 14, bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      margin: EdgeInsets.only(left: 58, right: 14, bottom: 4),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.bg2, borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Text(item.icon, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 8),
+          Text(item.icon, style: TextStyle(fontSize: 14)),
+          SizedBox(width: 8),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.title, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.white)),
+              Text(item.title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.white)),
               Wrap(spacing: 4, children: [
-                Text(item.sub, style: const TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                Text(item.sub, style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
                 _chipSmall('${item.calories.toInt()} kcal', AppColors.accent),
                 if (item.protein > 0) _chipSmall('P:${item.protein.toInt()}g', AppColors.lavender),
               ]),
@@ -1725,9 +1725,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             onTap: () => ref.read(appProvider.notifier).deleteScheduleItem(item.id),
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.all(3),
+              padding: EdgeInsets.all(3),
               decoration: BoxDecoration(color: AppColors.red.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(6)),
-              child: const Icon(Icons.close, size: 12, color: AppColors.red),
+              child: Icon(Icons.close, size: 12, color: AppColors.red),
             ),
           ),
         ],
@@ -1742,8 +1742,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        decoration: const BoxDecoration(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 32),
+        decoration: BoxDecoration(
           color: AppColors.bg1,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
@@ -1752,15 +1752,15 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           children: [
             Container(width: 40, height: 4, decoration: BoxDecoration(
               color: AppColors.textMuted, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(children: [
-              Text(item.icon, style: const TextStyle(fontSize: 24)),
-              const SizedBox(width: 12),
+              Text(item.icon, style: TextStyle(fontSize: 24)),
+              SizedBox(width: 12),
               Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
-                  Text('${item.time} \u{00B7} ${item.sub}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  Text(item.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+                  Text('${item.time} \u{00B7} ${item.sub}', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
               )),
             ]),
@@ -1831,12 +1831,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             alignment: Alignment.center,
             child: Icon(icon, size: 20, color: color),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(label, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: color)),
-              Text(subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text(subtitle, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
             ],
           )),
           Icon(Icons.chevron_right, size: 18, color: color.withValues(alpha: 0.5)),
@@ -1871,8 +1871,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
         child: StatefulBuilder(
           builder: (ctx, setDState) => Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
               color: AppColors.bg2,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
@@ -1880,12 +1880,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(children: [
+                Row(children: [
                   Icon(Icons.add_circle_outline, color: AppColors.accent, size: 22),
                   SizedBox(width: 10),
                   Text('Add Activity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
                 ]),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Flexible(
                   child: SingleChildScrollView(
             child: Column(
@@ -1893,7 +1893,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Activity type grid
-                const Text('Activity type:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text('Activity type:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8, runSpacing: 8,
@@ -1929,22 +1929,22 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 // Title
                 TextField(
                   controller: titleCtrl,
-                  style: const TextStyle(color: AppColors.white, fontSize: 14),
+                  style: TextStyle(color: AppColors.white, fontSize: 14),
                   decoration: _editDecor('Title'),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 // Time picker
                 Row(children: [
                   SizedBox(width: 100, child: TextField(
                     controller: timeCtrl,
-                    style: const TextStyle(color: AppColors.white, fontSize: 14),
+                    style: TextStyle(color: AppColors.white, fontSize: 14),
                     decoration: _editDecor('Time'),
                   )),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(child: InkWell(
                     onTap: () async {
                       final parts = timeCtrl.text.split(':');
@@ -1955,9 +1955,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       }
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
-                      child: const Row(children: [
+                      child: Row(children: [
                         Icon(Icons.access_time, size: 16, color: AppColors.accent),
                         SizedBox(width: 6),
                         Text('Pick time', style: TextStyle(fontSize: 12, color: AppColors.accent)),
@@ -1965,25 +1965,25 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     ),
                   )),
                 ]),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 // Description
                 TextField(
                   controller: subCtrl,
-                  style: const TextStyle(color: AppColors.white, fontSize: 14),
+                  style: TextStyle(color: AppColors.white, fontSize: 14),
                   decoration: _editDecor('Description'),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 // Reminder toggle
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.bg3,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(children: [
-                    const Icon(Icons.notifications_active, size: 16, color: AppColors.amber),
-                    const SizedBox(width: 8),
-                    const Expanded(child: Text('Set reminder notification', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
+                    Icon(Icons.notifications_active, size: 16, color: AppColors.amber),
+                    SizedBox(width: 8),
+                    Expanded(child: Text('Set reminder notification', style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
                     Switch(
                       value: setReminder,
                       onChanged: (v) => setDState(() => setReminder = v),
@@ -1995,15 +1995,15 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                      child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () async {
                 final title = titleCtrl.text.trim();
@@ -2013,7 +2013,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 if (setReminder) {
                   final granted = await NotificationService.instance.requestPermission();
                   if (!granted && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text('Notification permission denied. Reminders won\u2019t work.'),
                       backgroundColor: AppColors.red,
                     ));
@@ -2063,7 +2063,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                     content: Row(children: [
                       Text(icon, style: const TextStyle(fontSize: 18)),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Text('$title added${setReminder ? ' with reminder' : ''}'),
                     ]),
                     backgroundColor: AppColors.bg3,
@@ -2077,7 +2077,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         foregroundColor: AppColors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                      child: const Text('Add Activity', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                      child: Text('Add Activity', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -2130,8 +2130,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             }
 
             return Container(
-              padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.all(24),
+              decoration: BoxDecoration(
                 color: AppColors.bg2,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
               ),
@@ -2140,13 +2140,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(children: [
-                    Text(item.icon, style: const TextStyle(fontSize: 22)),
-                    const SizedBox(width: 10),
-                    Text('Edit ${item.title}', style: const TextStyle(
+                    Text(item.icon, style: TextStyle(fontSize: 22)),
+                    SizedBox(width: 10),
+                    Text('Edit ${item.title}', style: TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
                     )),
                   ]),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   Flexible(
                     child: SingleChildScrollView(
               child: Column(
@@ -2156,14 +2156,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   // Title
                   TextField(
                     controller: titleCtrl,
-                    style: const TextStyle(color: AppColors.white, fontSize: 14),
+                    style: TextStyle(color: AppColors.white, fontSize: 14),
                     decoration: _editDecor('Title'),
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10),
 
                   if (isSleep) ...[
                     // Sleep start/end time pickers
-                    const Text('Sleep time range:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text('Sleep time range:', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     const SizedBox(height: 8),
                     Row(children: [
                       Expanded(child: InkWell(
@@ -2176,15 +2176,15 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
                           child: Column(children: [
-                            const Text('Bedtime', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
-                            Text(sleepStart, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+                            Text('Bedtime', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                            Text(sleepStart, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
                           ]),
                         ),
                       )),
-                      const Padding(padding: EdgeInsets.symmetric(horizontal: 8),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 8),
                         child: Icon(Icons.arrow_forward, size: 18, color: AppColors.textMuted)),
                       Expanded(child: InkWell(
                         onTap: () async {
@@ -2196,11 +2196,11 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(12),
                           decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
                           child: Column(children: [
-                            const Text('Wake up', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
-                            Text(sleepEnd, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+                            Text('Wake up', style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
+                            Text(sleepEnd, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
                           ]),
                         ),
                       )),
@@ -2234,7 +2234,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     Row(children: [
                       SizedBox(width: 100, child: TextField(
                         controller: timeCtrl,
-                        style: const TextStyle(color: AppColors.white, fontSize: 14),
+                        style: TextStyle(color: AppColors.white, fontSize: 14),
                         decoration: _editDecor('Time (HH:MM)'),
                       )),
                       const SizedBox(width: 10),
@@ -2249,9 +2249,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           }
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           decoration: BoxDecoration(color: AppColors.bg3, borderRadius: BorderRadius.circular(10)),
-                          child: const Row(children: [
+                          child: Row(children: [
                             Icon(Icons.access_time, size: 16, color: AppColors.accent),
                             SizedBox(width: 6),
                             Text('Pick time', style: TextStyle(fontSize: 12, color: AppColors.accent)),
@@ -2259,10 +2259,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         ),
                       )),
                     ]),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     TextField(
                       controller: subCtrl,
-                      style: const TextStyle(color: AppColors.white, fontSize: 14),
+                      style: TextStyle(color: AppColors.white, fontSize: 14),
                       decoration: _editDecor('Description'),
                     ),
                   ],
@@ -2270,7 +2270,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -2279,12 +2279,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           ref.read(appProvider.notifier).deleteScheduleItem(item.id);
                           Navigator.pop(ctx);
                         },
-                        child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+                        child: Text('Delete', style: TextStyle(color: AppColors.red)),
                       ),
-                      const Spacer(),
+                      Spacer(),
                       TextButton(
                         onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                        child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton(
@@ -2302,7 +2302,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                           foregroundColor: AppColors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                        child: Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -2318,22 +2318,22 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   InputDecoration _editDecor(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+      labelStyle: TextStyle(fontSize: 12, color: AppColors.textSecondary),
       filled: true, fillColor: AppColors.bg3,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppColors.accent)),
+        borderSide: BorderSide(color: AppColors.accent)),
     );
   }
 
   // ─── Health Insights Card ──────────────────────────────────
   Widget _buildHealthInsights(AppNotifier notifier) {
     final insights = notifier.healthInsights;
-    if (insights.isEmpty) return const SizedBox.shrink();
+    if (insights.isEmpty) return SizedBox.shrink();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -2342,7 +2342,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(children: [
+          Row(children: [
             Icon(Icons.lightbulb_outline, size: 18, color: AppColors.amber),
             SizedBox(width: 8),
             Text("Today's Insights", style: TextStyle(
@@ -2378,16 +2378,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(insight['icon'] ?? '\u{1F4A1}', style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
+          Text(insight['icon'] ?? '\u{1F4A1}', style: TextStyle(fontSize: 20)),
+          SizedBox(width: 10),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(insight['title'] ?? '', style: const TextStyle(
+              Text(insight['title'] ?? '', style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.white,
               )),
-              const SizedBox(height: 3),
-              Text(insight['msg'] ?? '', style: const TextStyle(
+              SizedBox(height: 3),
+              Text(insight['msg'] ?? '', style: TextStyle(
                 fontSize: 11, height: 1.4, color: AppColors.textSecondary,
               )),
             ],

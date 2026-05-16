@@ -88,7 +88,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.90,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.bg2,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: AppColors.border2, width: 0.5)),
@@ -98,7 +98,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
         children: [
           // Handle
           Container(
-            margin: const EdgeInsets.only(top: 12),
+            margin: EdgeInsets.only(top: 12),
             width: 40, height: 4,
             decoration: BoxDecoration(
               color: AppColors.textMuted,
@@ -107,28 +107,28 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
           ),
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 12, 0),
+            padding: EdgeInsets.fromLTRB(20, 16, 12, 0),
             child: Row(
               children: [
-                Text(_title, style: const TextStyle(
+                Text(_title, style: TextStyle(
                   fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.white,
                 )),
-                const Spacer(),
+                Spacer(),
                 if (loggedItems.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: AppColors.green.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       '${loggedCals.toInt()} kcal logged',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.green),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.green),
                     ),
                   ),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 IconButton(
-                  icon: const Icon(Icons.close, color: AppColors.textSecondary),
+                  icon: Icon(Icons.close, color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -136,27 +136,27 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
           ),
           // Search
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Search foods...',
-                hintStyle: const TextStyle(color: AppColors.textMuted),
-                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
+                hintStyle: TextStyle(color: AppColors.textMuted),
+                prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.bg3,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.border2, width: 0.5),
+                  borderSide: BorderSide(color: AppColors.border2, width: 0.5),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.border2, width: 0.5),
+                  borderSide: BorderSide(color: AppColors.border2, width: 0.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.accent, width: 1),
+                  borderSide: BorderSide(color: AppColors.accent, width: 1),
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
@@ -165,15 +165,15 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
           // Food list
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               children: [
                 // Already logged section
                 if (loggedItems.isNotEmpty && _search.isEmpty) ...[
                   _sectionHeader('✅  Already logged', AppColors.green),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8),
                   ...loggedItems.map((s) => _buildLoggedTile(s)),
-                  const SizedBox(height: 16),
-                  const Divider(color: AppColors.border1, height: 1),
+                  SizedBox(height: 16),
+                  Divider(color: AppColors.border1, height: 1),
                   const SizedBox(height: 16),
                   _sectionHeader('➕  Add more', AppColors.textSecondary),
                   const SizedBox(height: 8),
@@ -215,25 +215,25 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
-            child: Text(item.icon, style: const TextStyle(fontSize: 18)),
+            child: Text(item.icon, style: TextStyle(fontSize: 18)),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.title, style: const TextStyle(
+                Text(item.title, style: TextStyle(
                   fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white,
                 )),
-                const SizedBox(height: 3),
+                SizedBox(height: 3),
                 Row(
                   children: [
                     _chipSmall('${item.calories.toInt()} kcal', AppColors.accent),
-                    const SizedBox(width: 4),
+                    SizedBox(width: 4),
                     if (item.protein > 0)
                       _chipSmall('P:${item.protein.toInt()}g', AppColors.lavender),
-                    const SizedBox(width: 4),
-                    Text(item.sub, style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                    SizedBox(width: 4),
+                    Text(item.sub, style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                   ],
                 ),
               ],
@@ -243,12 +243,12 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
             onTap: () => ref.read(appProvider.notifier).deleteScheduleItem(item.id),
             borderRadius: BorderRadius.circular(8),
             child: Container(
-              padding: const EdgeInsets.all(6),
+              padding: EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: AppColors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.delete_outline, color: AppColors.red, size: 18),
+              child: Icon(Icons.delete_outline, color: AppColors.red, size: 18),
             ),
           ),
         ],
@@ -278,10 +278,10 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(Icons.add_rounded, color: AppColors.accent, size: 24),
+                child: Icon(Icons.add_rounded, color: AppColors.accent, size: 24),
               ),
-              const SizedBox(width: 14),
-              const Expanded(
+              SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -295,7 +295,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
+              Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textMuted),
             ],
           ),
         ),
@@ -318,7 +318,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
         builder: (ctx, setDState) => AlertDialog(
           backgroundColor: AppColors.bg2,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
               Icon(Icons.restaurant_outlined, color: AppColors.accent, size: 22),
               SizedBox(width: 10),
@@ -334,26 +334,26 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                 _dialogField(nameCtrl, 'Food name', 'e.g. Masala Dosa', TextInputType.text),
                 const SizedBox(height: 10),
                 _dialogField(calCtrl, 'Calories (kcal)', 'e.g. 250', TextInputType.number),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Row(children: [
                   Expanded(child: _dialogField(protCtrl, 'Protein (g)', '0', TextInputType.number)),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(child: _dialogField(carbCtrl, 'Carbs (g)', '0', TextInputType.number)),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(child: _dialogField(fatCtrl, 'Fat (g)', '0', TextInputType.number)),
                 ]),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 _dialogField(sizeCtrl, 'Serving size', '1 plate', TextInputType.text),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 // Category selector
                 Row(
                   children: [
-                    const Text('Available in: ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                    const SizedBox(width: 6),
+                    Text('Available in: ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    SizedBox(width: 6),
                     DropdownButton<String>(
                       value: selectedCategory,
                       dropdownColor: AppColors.bg3,
-                      style: const TextStyle(fontSize: 13, color: AppColors.white),
+                      style: TextStyle(fontSize: 13, color: AppColors.white),
                       underline: Container(height: 1, color: AppColors.border2),
                       items: const [
                         DropdownMenuItem(value: 'breakfast', child: Text('Breakfast')),
@@ -372,7 +372,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -407,7 +407,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                 backgroundColor: AppColors.accent,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: const Text('Add Food', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+              child: Text('Add Food', style: TextStyle(color: AppColors.pureWhite, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -419,17 +419,17 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
     return TextField(
       controller: ctrl,
       keyboardType: type,
-      style: const TextStyle(color: AppColors.white, fontSize: 14),
+      style: TextStyle(color: AppColors.white, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        labelStyle: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         hintText: hint,
-        hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+        hintStyle: TextStyle(fontSize: 12, color: AppColors.textMuted),
         filled: true, fillColor: AppColors.bg3,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.accent)),
+          borderSide: BorderSide(color: AppColors.accent)),
       ),
     );
   }
@@ -493,18 +493,18 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                       borderRadius: BorderRadius.circular(14),
                     ),
                     alignment: Alignment.center,
-                    child: Text(food.icon, style: const TextStyle(fontSize: 24)),
+                    child: Text(food.icon, style: TextStyle(fontSize: 24)),
                   ),
-                  const SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(food.name, style: const TextStyle(
+                        Text(food.name, style: TextStyle(
                           fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.white,
                         )),
-                        const SizedBox(height: 2),
-                        Text(food.description, style: const TextStyle(
+                        SizedBox(height: 2),
+                        Text(food.description, style: TextStyle(
                           fontSize: 12, color: AppColors.textSecondary,
                         )),
                         const SizedBox(height: 4),
@@ -519,12 +519,12 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                             ),
                             if (isOverridden)
                               Padding(
-                                padding: const EdgeInsets.only(left: 4),
+                                padding: EdgeInsets.only(left: 4),
                                 child: Icon(Icons.edit, size: 10, color: AppColors.amber),
                               ),
                             Text(
                               '  ·  ${food.servingSize}',
-                              style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                              style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                             ),
                           ],
                         ),
@@ -540,13 +540,13 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
               ),
               // ─── Expanded section: qty picker + summary ───
               if (isExpanded) ...[
-                const SizedBox(height: 14),
-                const Divider(color: AppColors.border1, height: 1),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
+                Divider(color: AppColors.border1, height: 1),
+                SizedBox(height: 14),
                 // Quantity picker
                 Row(
                   children: [
-                    const Text('How many:', style: TextStyle(
+                    Text('How many:', style: TextStyle(
                       fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary,
                     )),
                     const Spacer(),
@@ -561,25 +561,25 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                         children: [
                           InkWell(
                             onTap: qty > 1 ? () => setState(() => _quantities[food.id] = qty - 1) : null,
-                            borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+                            borderRadius: BorderRadius.horizontal(left: Radius.circular(12)),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                               child: Icon(Icons.remove, size: 18,
                                 color: qty > 1 ? AppColors.textPrimary : AppColors.textMuted),
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Text('$qty', style: const TextStyle(
+                            padding: EdgeInsets.symmetric(horizontal: 12),
+                            child: Text('$qty', style: TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.accent,
                             )),
                           ),
                           InkWell(
                             onTap: () => setState(() => _quantities[food.id] = qty + 1),
-                            borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+                            borderRadius: BorderRadius.horizontal(right: Radius.circular(12)),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              child: const Icon(Icons.add, size: 18, color: AppColors.textPrimary),
+                              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              child: Icon(Icons.add, size: 18, color: AppColors.textPrimary),
                             ),
                           ),
                         ],
@@ -591,10 +591,10 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                     )),
                   ],
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: 14),
                 // Nutrition summary card
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: AppColors.bg1,
                     borderRadius: BorderRadius.circular(14),
@@ -604,11 +604,11 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.summarize_outlined, size: 14, color: AppColors.accent),
-                          const SizedBox(width: 6),
+                          Icon(Icons.summarize_outlined, size: 14, color: AppColors.accent),
+                          SizedBox(width: 6),
                           Text(
                             '$qty ${food.unit}${qty > 1 ? 's' : ''} of ${food.name}${isOverridden ? ' (custom)' : ''}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white),
                           ),
                         ],
                       ),
@@ -655,7 +655,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accent,
-                      foregroundColor: AppColors.white,
+                      foregroundColor: AppColors.pureWhite,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
@@ -672,7 +672,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
   Widget _nutrientBox(String label, String value, String unit, Color color) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
         const SizedBox(height: 4),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -710,9 +710,9 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Text(food.icon, style: const TextStyle(fontSize: 22)),
-            const SizedBox(width: 10),
-            Expanded(child: Text(food.name, style: const TextStyle(
+            Text(food.icon, style: TextStyle(fontSize: 22)),
+            SizedBox(width: 10),
+            Expanded(child: Text(food.name, style: TextStyle(
               fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
             ))),
           ],
@@ -722,32 +722,32 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Calories per serving (${food.servingSize}):',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-            const SizedBox(height: 10),
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+            SizedBox(height: 10),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
               autofocus: true,
-              style: const TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppColors.white, fontSize: 18, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 suffixText: 'kcal',
-                suffixStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
+                suffixStyle: TextStyle(color: AppColors.textMuted, fontSize: 14),
                 filled: true,
                 fillColor: AppColors.bg3,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border2),
+                  borderSide: BorderSide(color: AppColors.border2),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.accent),
+                  borderSide: BorderSide(color: AppColors.accent),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text('Default: ${food.calories.toInt()} kcal',
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
-            const Text('This change only affects new entries, not past logs.',
+              style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+            Text('This change only affects new entries, not past logs.',
               style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
           ],
         ),
@@ -759,11 +759,11 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                 setState(() {});
                 Navigator.pop(ctx);
               },
-              child: const Text('Reset', style: TextStyle(color: AppColors.red)),
+              child: Text('Reset', style: TextStyle(color: AppColors.red)),
             ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -778,7 +778,7 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
               backgroundColor: AppColors.accent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+            child: Text('Save', style: TextStyle(color: AppColors.pureWhite, fontWeight: FontWeight.bold)),
           ),
         ],
       ),

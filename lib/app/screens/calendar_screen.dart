@@ -9,7 +9,7 @@ import '../../utils/bmi_engine.dart';
 import 'dart:math' as math;
 
 class CalendarScreen extends ConsumerStatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  const CalendarScreen({super.key});
 
   @override
   ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
@@ -30,47 +30,44 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final state = ref.watch(appProvider);
     final profile = state.profile;
     if (profile == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       backgroundColor: AppColors.bg0,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 60,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.bg0,
-            title: const Text('Calendar', style: TextStyle(fontSize: 18)),
-            centerTitle: true,
-          ),
-          SliverToBoxAdapter(
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 10),
-                  // ─── Calendar Card ───────
+                  SizedBox(height: 20),
+                  Text('Calendar', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  SizedBox(height: 16),
+                  // 📅 Calendar Card 📅───────
                   _buildCalendarCard(),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   // ─── BMI Trend ───────────
                   _buildBmiTrend(state.weightEntries, profile),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   // ─── Weight Trend ────────
                   _buildWeightTrend(state.weightEntries, profile),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   // ─── Monthly Stats ───────
                   _buildMonthlyStats(state),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   // ─── Ring Charts ─────────
                   _buildRingCharts(state),
-                  const SizedBox(height: 100),
+                  SizedBox(height: 100),
                 ],
               ),
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -83,7 +80,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final startWeekday = firstDay.weekday;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -96,38 +93,38 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: AppColors.textSecondary),
+                icon: Icon(Icons.chevron_left, color: AppColors.textSecondary),
                 onPressed: () => setState(() =>
                   _currentMonth = DateTime(_currentMonth.year, _currentMonth.month - 1)),
               ),
               Text(
                 DateFormat('MMMM yyyy').format(_currentMonth),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                icon: Icon(Icons.chevron_right, color: AppColors.textSecondary),
                 onPressed: () => setState(() =>
                   _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + 1)),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           // Day headers
           Row(
             children: ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d) => Expanded(
-              child: Center(child: Text(d, style: const TextStyle(
+              child: Center(child: Text(d, style: TextStyle(
                 fontSize: 11, color: AppColors.textMuted, fontWeight: FontWeight.w600,
               ))),
             )).toList(),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           // Days grid
           ...List.generate(6, (week) {
             return Row(
               children: List.generate(7, (day) {
                 final dayNum = week * 7 + day + 1 - (startWeekday - 1);
                 if (dayNum < 1 || dayNum > lastDay.day) {
-                  return const Expanded(child: SizedBox(height: 38));
+                  return Expanded(child: SizedBox(height: 38));
                 }
                 final date = DateTime(_currentMonth.year, _currentMonth.month, dayNum);
                 final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
@@ -144,7 +141,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     },
                     child: Container(
                       height: 38,
-                      margin: const EdgeInsets.all(2),
+                      margin: EdgeInsets.all(2),
                       decoration: BoxDecoration(
                         color: isSelected ? AppColors.accent : isToday ? AppColors.accent.withOpacity(0.2) : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
@@ -156,8 +153,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           color: isFuture ? AppColors.textMuted
-                            : isSelected ? AppColors.white
-                            : isToday ? AppColors.accent : AppColors.white,
+                            : isSelected ? AppColors.pureWhite
+                            : isToday ? AppColors.accent : AppColors.textPrimary,
                           fontWeight: (isToday || isSelected) ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
@@ -175,7 +172,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // ─── BMI Trend ──────────────────────────────────────────────
   Widget _buildBmiTrend(List<WeightEntry> entries, UserProfile profile) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -184,17 +181,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('BMI over time', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          const SizedBox(height: 12),
+          Text('BMI over time', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          SizedBox(height: 12),
           if (entries.isEmpty)
             SizedBox(
               height: 80,
               child: Center(child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.trending_up, color: AppColors.textMuted, size: 28),
-                  const SizedBox(height: 6),
-                  const Text('Log your weight to see trends',
+                  Icon(Icons.trending_up, color: AppColors.textMuted, size: 28),
+                  SizedBox(height: 6),
+                  Text('Log your weight to see trends',
                     style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                 ],
               )),
@@ -203,18 +200,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             SizedBox(
               height: 80,
               child: CustomPaint(
-                size: const Size(double.infinity, 80),
+                size: Size(double.infinity, 80),
                 painter: _BmiChartPainter(entries),
               ),
             ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _legendDot(AppColors.bmiNormal, '18.5–25'),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               _legendDot(AppColors.bmiOver, '25–30'),
-              const SizedBox(width: 16),
+              SizedBox(width: 16),
               _legendDot(AppColors.bmiObese, '>30'),
             ],
           ),
@@ -229,8 +226,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         Container(width: 8, height: 8, decoration: BoxDecoration(
           color: color, borderRadius: BorderRadius.circular(4),
         )),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textMuted)),
+        SizedBox(width: 4),
+        Text(label, style: TextStyle(fontSize: 10, color: AppColors.textMuted)),
       ],
     );
   }
@@ -238,7 +235,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   // ─── Weight Trend & Log Button ──────────────────────────────
   Widget _buildWeightTrend(List<WeightEntry> entries, UserProfile profile) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -250,22 +247,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Weight trend', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+              Text('Weight trend', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               Text('${profile.currentWeight.toStringAsFixed(1)} kg',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white)),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.white)),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SizedBox(
             height: 60,
             child: entries.isEmpty
-              ? const Center(child: Text('No entries yet', style: TextStyle(fontSize: 12, color: AppColors.textMuted)))
+              ? Center(child: Text('No entries yet', style: TextStyle(fontSize: 12, color: AppColors.textMuted)))
               : CustomPaint(
-                  size: const Size(double.infinity, 60),
+                  size: Size(double.infinity, 60),
                   painter: _WeightChartPainter(entries),
                 ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -273,10 +270,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.bg3,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: 12),
                 elevation: 0,
               ),
-              child: const Text("Log today's weight", style: TextStyle(
+              child: Text("Log today's weight", style: TextStyle(
                 fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.w500,
               )),
             ),
@@ -294,7 +291,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       isScrollControlled: true,
       builder: (_) => Container(
         padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 30),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.bg2,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -302,21 +299,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Log weight', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
-            const SizedBox(height: 16),
+            Text('Log weight', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
+            SizedBox(height: 16),
             TextField(
               controller: ctrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              style: TextStyle(color: AppColors.textPrimary, fontSize: 16),
               decoration: InputDecoration(
                 suffixText: 'kg',
-                suffixStyle: const TextStyle(color: AppColors.textSecondary),
+                suffixStyle: TextStyle(color: AppColors.textSecondary),
                 filled: true,
                 fillColor: AppColors.bg3,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             // BMI live preview
             StatefulBuilder(builder: (ctx, setState) {
               final w = double.tryParse(ctrl.text) ?? profile.currentWeight;
@@ -324,7 +321,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               final cat = BmiEngine.getBmiCategory(bmi);
               ctrl.addListener(() => setState(() {}));
               return Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: AppColors.bg3,
                   borderRadius: BorderRadius.circular(12),
@@ -332,14 +329,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('BMI preview:', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    Text('BMI preview:', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                     Text('${bmi.toStringAsFixed(1)} — ${BmiEngine.getBmiLabel(cat)}',
                       style: TextStyle(fontSize: 13, color: _bmiColor(cat), fontWeight: FontWeight.bold)),
                   ],
                 ),
               );
             }),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
             SizedBox(
               width: double.infinity, height: 48,
               child: ElevatedButton(
@@ -359,7 +356,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   backgroundColor: AppColors.accent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Log weight', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text('Log weight', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -372,7 +369,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _buildMonthlyStats(AppState state) {
     final notifier = ref.read(appProvider.notifier);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -381,17 +378,17 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Today\'s scores', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-          const SizedBox(height: 12),
+          Text('Today\'s scores', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          SizedBox(height: 12),
           _ratioBar('Diet', notifier.dietScore / 100, AppColors.green),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           _ratioBar('Water', notifier.waterScore / 100, AppColors.blue),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           _ratioBar('Calories', state.profile!.macroTargets.calories > 0
             ? (notifier.caloriesEaten / state.profile!.macroTargets.calories).clamp(0.0, 1.0) : 0.0,
             AppColors.amber),
           if (state.profile!.mode == AppMode.gym) ...[
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             _ratioBar('Protein', state.profile!.macroTargets.protein > 0
               ? (notifier.proteinEaten / state.profile!.macroTargets.protein).clamp(0.0, 1.0) : 0.0,
               AppColors.lavender),
@@ -404,7 +401,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget _ratioBar(String label, double value, Color color) {
     return Row(
       children: [
-        SizedBox(width: 60, child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))),
+        SizedBox(width: 60, child: Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary))),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(3),
@@ -416,7 +413,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Text('${(value * 100).toInt()}%', style: TextStyle(
           fontSize: 11, fontWeight: FontWeight.bold, color: color,
         )),
@@ -436,9 +433,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Row(
       children: [
         Expanded(child: _ringChart('On plan', total > 0 ? done / total : 0, AppColors.green)),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(child: _ringChart('Missed', total > 0 ? (total - done) / total : 0, AppColors.red)),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(child: _ringChart('Workouts', workouts.isEmpty ? 0 : workoutsDone / workouts.length, AppColors.amber)),
       ],
     );
@@ -446,7 +443,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Widget _ringChart(String label, double value, Color color) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -471,8 +468,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+          SizedBox(height: 8),
+          Text(label, style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
         ],
       ),
     );

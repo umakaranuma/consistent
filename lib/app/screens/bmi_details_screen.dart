@@ -30,24 +30,24 @@ class BmiDetailsScreen extends ConsumerWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Current Status Card
             _buildStatusCard(profile, ideal, weight, cat),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Color Coded Range Legend
-            const Text('BMI Categories', style: TextStyle(
+            Text('BMI Categories', style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
             )),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildRangeLegend(bmi),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
 
             // Weight Range Details
-            const Text('Weight Details', style: TextStyle(
+            Text('Weight Details', style: TextStyle(
               fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
             )),
             const SizedBox(height: 16),
@@ -109,9 +109,9 @@ class BmiDetailsScreen extends ConsumerWidget {
   Widget _statColumn(String label, String value) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
+        Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
       ],
     );
   }
@@ -126,11 +126,11 @@ class BmiDetailsScreen extends ConsumerWidget {
       child: Column(
         children: [
           _legendRow('Underweight', '< 18.5', AppColors.bmiUnder, currentBmi < 18.5),
-          const Divider(height: 1, color: AppColors.border2),
+          Divider(height: 1, color: AppColors.border2),
           _legendRow('Normal', '18.5 - 24.9', AppColors.bmiNormal, currentBmi >= 18.5 && currentBmi < 25),
-          const Divider(height: 1, color: AppColors.border2),
+          Divider(height: 1, color: AppColors.border2),
           _legendRow('Overweight', '25.0 - 29.9', AppColors.bmiOver, currentBmi >= 25 && currentBmi < 30),
-          const Divider(height: 1, color: AppColors.border2),
+          Divider(height: 1, color: AppColors.border2),
           _legendRow('Obese', '≥ 30.0', AppColors.bmiObese, currentBmi >= 30),
         ],
       ),
@@ -192,7 +192,7 @@ class BmiDetailsScreen extends ConsumerWidget {
             : 'You have reached your goal weight!';
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.bg1,
         borderRadius: BorderRadius.circular(20),
@@ -204,51 +204,51 @@ class BmiDetailsScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Healthy Range', style: TextStyle(color: AppColors.textSecondary)),
-              Text('${ideal['min']} kg - ${ideal['max']} kg', style: const TextStyle(
+              Text('Healthy Range', style: TextStyle(color: AppColors.textSecondary)),
+              Text('${ideal['min']} kg - ${ideal['max']} kg', style: TextStyle(
                 fontWeight: FontWeight.bold, color: AppColors.bmiNormal, fontSize: 16,
               )),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: AppColors.border2),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
+          Divider(height: 1, color: AppColors.border2),
+          SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Personal Goal', style: TextStyle(color: AppColors.textSecondary)),
-              Text('${goal.toStringAsFixed(1)} kg', style: const TextStyle(
+              Text('Personal Goal', style: TextStyle(color: AppColors.textSecondary)),
+              Text('${goal.toStringAsFixed(1)} kg', style: TextStyle(
                 fontWeight: FontWeight.bold, color: AppColors.accent, fontSize: 16,
               )),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.bg2,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20),
-                const SizedBox(width: 12),
-                Expanded(child: Text(advice, style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4))),
+                Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20),
+                SizedBox(width: 12),
+                Expanded(child: Text(advice, style: TextStyle(fontSize: 13, color: AppColors.textPrimary, height: 1.4))),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: AppColors.accent.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               children: [
-                const Icon(Icons.flag_outlined, color: AppColors.accent, size: 20),
-                const SizedBox(width: 12),
-                Expanded(child: Text(goalText, style: const TextStyle(fontSize: 13, color: AppColors.accent, fontWeight: FontWeight.w500))),
+                Icon(Icons.flag_outlined, color: AppColors.accent, size: 20),
+                SizedBox(width: 12),
+                Expanded(child: Text(goalText, style: TextStyle(fontSize: 13, color: AppColors.accent, fontWeight: FontWeight.w500))),
               ],
             ),
           ),
