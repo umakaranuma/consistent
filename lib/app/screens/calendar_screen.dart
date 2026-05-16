@@ -131,17 +131,30 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 final date = DateTime(_currentMonth.year, _currentMonth.month, dayNum);
                 final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
                 final isFuture = date.isAfter(now);
+                final isSelected = _selectedDate != null && date.year == _selectedDate!.year && date.month == _selectedDate!.month && date.day == _selectedDate!.day;
 
                 return Expanded(
                   child: GestureDetector(
-                    onTap: isFuture ? null : () => setState(() => _selectedDate = date),
+                    onTap: isFuture ? null : () {
+                      setState(() => _selectedDate = date);
+                      if (!isToday && !isFuture) {
+                        // Clear existing snackbars to avoid queueing
+                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                          content: Text('No historical data available. You are new!'),
+                          backgroundColor: AppColors.accent,
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
+                        ));
+                      }
+                    },
                     child: Container(
                       height: 38,
                       margin: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
-                        color: isToday ? AppColors.accent.withOpacity(0.2) : Colors.transparent,
+                        color: isSelected ? AppColors.accent : isToday ? AppColors.accent.withOpacity(0.2) : Colors.transparent,
                         borderRadius: BorderRadius.circular(10),
-                        border: isToday ? Border.all(color: AppColors.accent, width: 1) : null,
+                        border: (isToday && !isSelected) ? Border.all(color: AppColors.accent, width: 1) : null,
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -149,8 +162,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         style: TextStyle(
                           fontSize: 13,
                           color: isFuture ? AppColors.textMuted
+                            : isSelected ? AppColors.white
                             : isToday ? AppColors.accent : AppColors.white,
-                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: (isToday || isSelected) ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
                     ),

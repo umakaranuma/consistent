@@ -256,9 +256,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Widget _sheetBtn(String label, VoidCallback onTap) => SizedBox(width: double.infinity, height: 48,
     child: ElevatedButton(onPressed: onTap,
-      style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
-      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15))));
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.accent,
+        foregroundColor: AppColors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), 
+        elevation: 0,
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.white))));
 
   Widget _choiceTile(String label, bool selected, VoidCallback onTap) => GestureDetector(onTap: onTap,
     child: Container(

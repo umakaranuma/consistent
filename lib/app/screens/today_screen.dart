@@ -21,6 +21,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   // Which meal period is currently expanded (auto-set by time of day)
   late String _expandedMeal;
   int? _selectedGymDay; // null = show today
+  int _currentTab = 0;
 
   @override
   void initState() {
@@ -101,7 +102,100 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     );
   }
 
-  // â”€â”€â”€ App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
+  Widget _buildTabBar(UserProfile profile) {
+    final tabs = ['Routine', 'Nutrition'];
+    if (profile.mode == AppMode.gym) tabs.add('Gym');
+    
+    if (_currentTab >= tabs.length) _currentTab = 0;
+
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.bg2,
+        borderRadius: BorderRadius.circular(23),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (i) {
+          final isSelected = _currentTab == i;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _currentTab = i),
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.accent : Colors.transparent,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: isSelected ? [
+                    BoxShadow(color: AppColors.accent.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))
+                  ] : [],
+                ),
+                child: Text(
+                  tabs[i],
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    color: isSelected ? AppColors.white : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildTabContent(BuildContext context, UserProfile profile, AppState state, 
+                          dynamic notifier, WidgetRef ref, double eaten, double p, double c, double f) {
+    final tabs = ['Routine', 'Nutrition'];
+    if (profile.mode == AppMode.gym) tabs.add('Gym');
+    final activeTab = tabs[_currentTab];
+
+    if (activeTab == 'Routine') {
+      return Column(
+        key: const ValueKey('Routine'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHealthInsights(notifier),
+          const SizedBox(height: 20),
+          _buildDailyPlan(context, state, ref),
+        ],
+      );
+    } else if (activeTab == 'Nutrition') {
+      return Column(
+        key: const ValueKey('Nutrition'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildBmiCard(context, profile, ref),
+          const SizedBox(height: 16),
+          _buildCalorieCard(eaten, profile.macroTargets),
+          const SizedBox(height: 16),
+          _buildMacroCard(p, c, f, profile.macroTargets, profile.mode),
+          const SizedBox(height: 16),
+          _buildWaterCard(context, state.waterConfig, ref),
+          const SizedBox(height: 24),
+          _buildLogFoodButtons(context),
+        ],
+      );
+    } else if (activeTab == 'Gym') {
+      return Column(
+        key: const ValueKey('Gym'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildWeeklyWorkoutRow(profile),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  // ─── App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildAppBar(UserProfile profile, int streak) {
     final hour = DateTime.now().hour;
     String greeting;
@@ -1772,18 +1866,31 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       {'key': 'custom', 'icon': '\u{2B50}', 'label': 'Custom', 'sub': ''},
     ];
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDState) => AlertDialog(
-          backgroundColor: AppColors.bg2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(children: [
-            Icon(Icons.add_circle_outline, color: AppColors.accent, size: 22),
-            SizedBox(width: 10),
-            Text('Add Activity', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white)),
-          ]),
-          content: SingleChildScrollView(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: StatefulBuilder(
+          builder: (ctx, setDState) => Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: AppColors.bg2,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(children: [
+                  Icon(Icons.add_circle_outline, color: AppColors.accent, size: 22),
+                  SizedBox(width: 10),
+                  Text('Add Activity', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
+                ]),
+                const SizedBox(height: 20),
+                Flexible(
+                  child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1889,14 +1996,19 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 ),
               ],
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () async {
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () async {
                 final title = titleCtrl.text.trim();
                 if (title.isEmpty) return;
 
@@ -1963,13 +2075,18 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   ));
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Add Activity', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('Add Activity', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -1993,35 +2110,48 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       }
     }
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDState) {
-          // Calculate sleep hours for display
-          double? sleepHours;
-          if (isSleep) {
-            final sp = sleepStart.split(':');
-            final ep = sleepEnd.split(':');
-            if (sp.length == 2 && ep.length == 2) {
-              final sMin = int.parse(sp[0]) * 60 + int.parse(sp[1]);
-              final eMin = int.parse(ep[0]) * 60 + int.parse(ep[1]);
-              var diff = eMin - sMin;
-              if (diff < 0) diff += 24 * 60;
-              sleepHours = diff / 60.0;
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: StatefulBuilder(
+          builder: (ctx, setDState) {
+            // Calculate sleep hours for display
+            double? sleepHours;
+            if (isSleep) {
+              final sp = sleepStart.split(':');
+              final ep = sleepEnd.split(':');
+              if (sp.length == 2 && ep.length == 2) {
+                final sMin = int.parse(sp[0]) * 60 + int.parse(sp[1]);
+                final eMin = int.parse(ep[0]) * 60 + int.parse(ep[1]);
+                var diff = eMin - sMin;
+                if (diff < 0) diff += 24 * 60;
+                sleepHours = diff / 60.0;
+              }
             }
-          }
 
-          return AlertDialog(
-            backgroundColor: AppColors.bg2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Row(children: [
-              Text(item.icon, style: const TextStyle(fontSize: 22)),
-              const SizedBox(width: 10),
-              Text('Edit ${item.title}', style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
-              )),
-            ]),
-            content: SingleChildScrollView(
+            return Container(
+              padding: const EdgeInsets.all(24),
+              decoration: const BoxDecoration(
+                color: AppColors.bg2,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Text(item.icon, style: const TextStyle(fontSize: 22)),
+                    const SizedBox(width: 10),
+                    Text('Edit ${item.title}', style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white,
+                    )),
+                  ]),
+                  const SizedBox(height: 20),
+                  Flexible(
+                    child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2142,20 +2272,26 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 ],
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  ref.read(appProvider.notifier).deleteScheduleItem(item.id);
-                  Navigator.pop(ctx);
-                },
-                child: const Text('Delete', style: TextStyle(color: AppColors.red)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
-              ),
-              ElevatedButton(
-                onPressed: () {
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+                      TextButton(
+                        onPressed: () {
+                          ref.read(appProvider.notifier).deleteScheduleItem(item.id);
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Delete', style: TextStyle(color: AppColors.red)),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
                   final updated = item.copyWith(
                     title: titleCtrl.text.trim(),
                     time: isSleep ? sleepStart : timeCtrl.text.trim(),
@@ -2164,15 +2300,20 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   ref.read(appProvider.notifier).updateScheduleItem(item.id, updated);
                   Navigator.pop(ctx);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.accent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: AppColors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text('Save', style: TextStyle(color: AppColors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
