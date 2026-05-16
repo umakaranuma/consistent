@@ -106,8 +106,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   _save(p.copyWith(activityLevel: v, macroTargets: macros));
                 })),
               _actionRow('Reset to recommended plan', Icons.refresh, AppColors.amber, () {
-                ref.read(appProvider.notifier).regeneratePlan();
-                _snack('Plan regenerated from your profile!');
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  builder: (ctx) => Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: const BoxDecoration(
+                      color: AppColors.bg2,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: AppColors.amber, size: 48),
+                        const SizedBox(height: 16),
+                        const Text('Reset Recommended Plan?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.white)),
+                        const SizedBox(height: 8),
+                        const Text('This will overwrite your current schedule and macros with the recommended default values based on your profile.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(child: TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)))),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  ref.read(appProvider.notifier).regeneratePlan();
+                                  Navigator.pop(ctx);
+                                  _snack('Plan regenerated from your profile!');
+                                },
+                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.amber, foregroundColor: AppColors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                                child: const Text('Reset', style: TextStyle(fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
+                );
               }),
               const SizedBox(height: 20),
 
