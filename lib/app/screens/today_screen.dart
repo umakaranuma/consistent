@@ -1,3 +1,4 @@
+import '../../utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
@@ -443,11 +444,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       ));
                       Navigator.pop(ctx);
                       
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text('Weight logged! Macros & targets updated automatically.'),
-                        backgroundColor: AppColors.green,
-                        behavior: SnackBarBehavior.floating,
-                      ));
+                      UiHelpers.showSnack(context, 'Weight logged! Macros & targets updated automatically.', isSuccess: true);
                     }
                   },
                   style: ElevatedButton.styleFrom(

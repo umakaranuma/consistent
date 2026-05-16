@@ -1,3 +1,4 @@
+import '../../utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
@@ -243,10 +244,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                 if (!r.enabled) {
                   final granted = await NotificationService.instance.requestPermission();
                   if (!granted && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Please allow notifications for reminders to work'),
-                      backgroundColor: AppColors.red,
-                    ));
+                    UiHelpers.showSnack(context, 'Please allow notifications for reminders to work', isError: true);
                     return;
                   }
                 }

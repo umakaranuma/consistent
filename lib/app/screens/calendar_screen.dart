@@ -1,3 +1,4 @@
+import '../../utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -138,14 +139,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     onTap: isFuture ? null : () {
                       setState(() => _selectedDate = date);
                       if (!isToday && !isFuture) {
-                        // Clear existing snackbars to avoid queueing
-                        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text('No historical data available. You are new!'),
-                          backgroundColor: AppColors.accent,
-                          behavior: SnackBarBehavior.floating,
-                          duration: Duration(seconds: 2),
-                        ));
+                        UiHelpers.showSnack(context, 'No historical data available. You are new!');
                       }
                     },
                     child: Container(

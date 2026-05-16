@@ -1,3 +1,4 @@
+import '../../utils/ui_helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../constants/colors.dart';
@@ -144,9 +145,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   // ═══════════════════ SAVE HELPER ═══════════════════
   void _save(UserProfile p) => ref.read(appProvider.notifier).updateProfile(p);
-  void _snack(String msg) => ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(msg), backgroundColor: AppColors.bg3, behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
+  void _snack(String msg) => UiHelpers.showSnack(context, msg, isSuccess: true);
 
   // ═══════════════════ EDIT MODALS ═══════════════════
   void _editText(String label, String current, Function(String) onSave) {
