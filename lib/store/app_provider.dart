@@ -80,8 +80,9 @@ class AppNotifier extends Notifier<AppState> {
     // Auto-sync schedule notifications on startup
     if (schedule.isNotEmpty) {
       Future.microtask(() {
-        NotificationService.instance.syncScheduleNotifications(schedule);
-        _startOverdueChecker();
+        NotificationService.instance.syncScheduleNotifications(schedule, skippedIds: state.skippedIds);
+        NotificationService.instance.syncWaterOverdue(waterConfig);
+        
       });
     }
 
@@ -172,6 +173,7 @@ class AppNotifier extends Notifier<AppState> {
       _saveState(state.copyWith(
         waterConfig: state.waterConfig!.copyWith(consumed: 0),
       ));
+      NotificationService.instance.syncWaterOverdue(state.waterConfig);
     }
   }
 
@@ -192,7 +194,7 @@ class AppNotifier extends Notifier<AppState> {
     }).toList();
     _saveState(state.copyWith(schedule: schedule));
     // Restart overdue checker with updated schedule state
-    _startOverdueChecker();
+    
   }
 
 
@@ -203,7 +205,7 @@ class AppNotifier extends Notifier<AppState> {
     _box.put('skippedToday', newSkipped.toList());
     _box.put('skippedDate', DateTime.now().toIso8601String().substring(0, 10));
     _saveState(state.copyWith(skippedIds: newSkipped));
-    _startOverdueChecker();
+    
   }
 
   void unskipScheduleItem(String id) {
@@ -212,7 +214,7 @@ class AppNotifier extends Notifier<AppState> {
     final newSkipped = {...state.skippedIds}..remove(id);
     _box.put('skippedToday', newSkipped.toList());
     _saveState(state.copyWith(skippedIds: newSkipped));
-    _startOverdueChecker();
+    
   }
 
   bool isSkipped(String id) => state.skippedIds.contains(id);
@@ -277,7 +279,7 @@ class AppNotifier extends Notifier<AppState> {
     resetWater();
     clearActivityLog();
     _syncScheduleNotifications();
-    _startOverdueChecker();
+    
   }
 
   // ─── Weight Entries ──────────────────────────────────────
@@ -380,21 +382,11 @@ class AppNotifier extends Notifier<AppState> {
 
   // ─── Schedule Notification Sync ──────────────────────────
   void _syncScheduleNotifications() {
-    NotificationService.instance.syncScheduleNotifications(state.schedule);
+    NotificationService.instance.syncScheduleNotifications(state.schedule, skippedIds: state.skippedIds);
   }
 
   // ─── Overdue Checker ─────────────────────────────────────
-  void _startOverdueChecker() {
-    NotificationService.instance.startOverdueChecker(
-      getSchedule: () => state.schedule,
-      getWaterConfig: () => state.waterConfig,
-      skippedIds: state.skippedIds,
-    );
-  }
 
-  void stopOverdueChecker() {
-    NotificationService.instance.stopOverdueChecker();
-  }
 
   // ─── Computed Helpers ────────────────────────────────────
   double get caloriesEaten =>

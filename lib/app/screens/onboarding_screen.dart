@@ -6,6 +6,7 @@ import '../../constants/colors.dart';
 import '../../store/app_provider.dart';
 import '../../store/types.dart';
 import '../../utils/bmi_engine.dart';
+import '../../utils/notification_service.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -125,6 +126,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     ref.read(appProvider.notifier).setProfile(profile);
     ref.read(appProvider.notifier).setWaterConfig(waterConfig);
     ref.read(appProvider.notifier).setSchedule(schedule);
+
+    if (_pushEnabled) {
+      await NotificationService.instance.requestPermission();
+    }
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('vitatrack_onboarded', 'true');
