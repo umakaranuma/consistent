@@ -67,31 +67,31 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  // â”€â”€â”€ BMI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  _buildBmiCard(context, profile, ref),
-                  const SizedBox(height: 16),
-                  // â”€â”€â”€ Score Row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  _buildScoreRow(notifier, profile, state),
-                  const SizedBox(height: 16),
-                  // â”€â”€â”€ Calorie Card â”€â”€â”€â”€â”€â”€â”€â”€
-                  _buildCalorieCard(eaten, profile.macroTargets),
-                  const SizedBox(height: 16),
-                  // â”€â”€â”€ Macro Bars â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  _buildMacroCard(pEaten, cEaten, fEaten, profile.macroTargets, profile.mode),
-                  const SizedBox(height: 16),
-                  // â”€â”€â”€ Water Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  _buildWaterCard(context, state.waterConfig, ref),
-                  const SizedBox(height: 16),
-                  // â”€â”€â”€ Weekly Workout â”€â”€â”€â”€â”€â”€
-                  _buildWeeklyWorkoutRow(profile),
-                  const SizedBox(height: 24),
-                  // â”€â”€â”€ Log Food Buttons â”€â”€â”€â”€
+                  // ─── Log Food Buttons (top) ───
                   _buildLogFoodButtons(context),
                   const SizedBox(height: 24),
-                  // â”€â”€â”€ Daily Plan (unified meals + schedule) â”€â”€
+                  // ─── Today's Routine: add + mark activities (core) ───
                   _buildDailyPlan(context, state, ref),
+                  const SizedBox(height: 24),
+                  // ─── Today's stats at a glance ───
+                  _buildScoreRow(notifier, profile, state),
+                  const SizedBox(height: 16),
+                  // ─── Calorie Card ───
+                  _buildCalorieCard(eaten, profile.macroTargets),
+                  const SizedBox(height: 16),
+                  // ─── Macro Bars ───
+                  _buildMacroCard(pEaten, cEaten, fEaten, profile.macroTargets, profile.mode),
+                  const SizedBox(height: 16),
+                  // ─── Water Card ───
+                  _buildWaterCard(context, state.waterConfig, ref),
+                  const SizedBox(height: 24),
+                  // ─── BMI & Weight (reference) ───
+                  _buildBmiCard(context, profile, ref),
+                  const SizedBox(height: 24),
+                  // ─── Weekly Gym Split (above insights) ───
+                  _buildWeeklyWorkoutRow(profile),
                   const SizedBox(height: 20),
-                  // ─── Health Insights ──
+                  // ─── Today's Insights ───
                   _buildHealthInsights(notifier),
                   const SizedBox(height: 100),
                 ],
