@@ -1925,12 +1925,34 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       ),
                       child: Text('SKIPPED', style: TextStyle(fontSize: 8, fontWeight: FontWeight.w800, color: AppColors.textMuted)),
                     ),
-                  Flexible(child: Text(item.title, style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w700,
-                    color: isSkipped ? AppColors.textMuted.withValues(alpha: 0.5) : item.done ? AppColors.textMuted : AppColors.white,
-                    decoration: (item.done || isSkipped) ? TextDecoration.lineThrough : null,
-                    decorationColor: AppColors.textMuted,
-                  ))),
+                  Flexible(
+                    child: GestureDetector(
+                      onTap: () {
+                        if (item.type == ScheduleItemType.meal || item.type == ScheduleItemType.snack) {
+                          String category = 'snack';
+                          final t = item.title.toLowerCase();
+                          if (t.contains('breakfast')) category = 'breakfast';
+                          else if (t.contains('lunch')) category = 'lunch';
+                          else if (t.contains('dinner')) category = 'dinner';
+                          
+                          showFoodPicker(context, category);
+                        } else {
+                          if (isSkipped) return;
+                          final wasDone = item.done;
+                          ref.read(appProvider.notifier).toggleScheduleItem(item.id);
+                          if (item.type == ScheduleItemType.sleep && !wasDone) {
+                            _showDayEndSummary(context, ref);
+                          }
+                        }
+                      },
+                      child: Text(item.title, style: TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w700,
+                        color: isSkipped ? AppColors.textMuted.withValues(alpha: 0.5) : item.done ? AppColors.textMuted : AppColors.white,
+                        decoration: (item.done || isSkipped) ? TextDecoration.lineThrough : null,
+                        decorationColor: AppColors.textMuted,
+                      )),
+                    ),
+                  ),
                 ]),
                 if (item.sub.isNotEmpty)
                   Text(item.sub, style: TextStyle(fontSize: 10,

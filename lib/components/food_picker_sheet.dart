@@ -531,11 +531,26 @@ class _FoodPickerSheetState extends ConsumerState<FoodPickerSheet> {
                       ],
                     ),
                   ),
-                  Icon(
-                    isExpanded ? Icons.keyboard_arrow_up : Icons.add_circle_outline,
-                    color: isExpanded ? AppColors.textSecondary : AppColors.accent,
-                    size: 24,
-                  ),
+                  // + icon = quick-log one standard serving.
+                  // Tapping anywhere else on the card expands it.
+                  isExpanded
+                      ? InkWell(
+                          onTap: () => setState(() => _expandedId = null),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(Icons.keyboard_arrow_up,
+                                color: AppColors.textSecondary, size: 24),
+                          ),
+                        )
+                      : InkWell(
+                          onTap: () => _selectFood(food, food.servingQty),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(Icons.add_circle, color: AppColors.accent, size: 28),
+                          ),
+                        ),
                 ],
               ),
               // ─── Expanded section: qty picker + summary ───
