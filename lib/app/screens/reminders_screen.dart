@@ -364,7 +364,13 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                     backgroundColor: AppColors.accent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Save reminder', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    'Save reminder',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ],

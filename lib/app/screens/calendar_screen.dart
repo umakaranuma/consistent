@@ -509,7 +509,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ),
                 child: Text(
                   'Log weight',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.pureWhite,
+                  ),
                 ),
               ),
             ),
