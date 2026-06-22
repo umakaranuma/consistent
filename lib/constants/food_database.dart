@@ -72,6 +72,27 @@ class FoodDatabase {
       description: 'Wheat flour flatbread', icon: '🫓',
       calories: 120, protein: 3, carbs: 20, fat: 3,
       servingSize: '1 piece', servingQty: 1, unit: 'pc'),
+    // ── Diet-plan breakfast staples ──
+    FoodItem(id: 'b18', name: 'Samaposha', category: 'breakfast',
+      description: '4–5 tbsp + 1 tbsp peanut butter, minimal sugar', icon: '🥣',
+      calories: 250, protein: 9, carbs: 32, fat: 11,
+      servingSize: '1 bowl', servingQty: 1, unit: 'bowl'),
+    FoodItem(id: 'b19', name: 'Boiled Eggs', category: 'breakfast',
+      description: 'Hard boiled eggs', icon: '🥚',
+      calories: 140, protein: 12, carbs: 0, fat: 10,
+      servingSize: '2 eggs', servingQty: 2, unit: 'egg'),
+    FoodItem(id: 'b20', name: 'Whole Wheat Bread', category: 'breakfast',
+      description: 'Brown / whole wheat bread slices', icon: '🍞',
+      calories: 160, protein: 8, carbs: 28, fat: 2,
+      servingSize: '2 slices', servingQty: 2, unit: 'slice'),
+    FoodItem(id: 'b21', name: 'Peanut Butter', category: 'breakfast',
+      description: 'Natural peanut butter', icon: '🥜',
+      calories: 95, protein: 4, carbs: 3, fat: 8,
+      servingSize: '1 tbsp', servingQty: 1, unit: 'tbsp'),
+    FoodItem(id: 'b22', name: 'Jam', category: 'breakfast',
+      description: 'Fruit jam spread', icon: '🍓',
+      calories: 55, protein: 0, carbs: 14, fat: 0,
+      servingSize: '1 tbsp', servingQty: 1, unit: 'tbsp'),
   ];
 
   static const List<FoodItem> lunchItems = [
@@ -139,6 +160,19 @@ class FoodDatabase {
       description: 'Pittu with chicken curry', icon: '🍚',
       calories: 450, protein: 20, carbs: 52, fat: 16,
       servingSize: '1 serving', servingQty: 1, unit: 'serving'),
+    // ── Diet-plan lunch (desk-worker, controlled portions) ──
+    FoodItem(id: 'l17', name: 'Red Rice & Veg Curry', category: 'lunch',
+      description: '1 cup red rice + Jaffna vegetable curries', icon: '🍛',
+      calories: 360, protein: 10, carbs: 60, fat: 8,
+      servingSize: '1 plate', servingQty: 1, unit: 'plate'),
+    FoodItem(id: 'l18', name: 'Keerai Poriyal', category: 'lunch',
+      description: 'Stir-fried greens with coconut', icon: '🥬',
+      calories: 90, protein: 4, carbs: 10, fat: 4,
+      servingSize: '1 serving', servingQty: 1, unit: 'serving'),
+    FoodItem(id: 'l19', name: 'Paruppu & Red Rice', category: 'lunch',
+      description: '1 cup red rice + dhal (paruppu)', icon: '🍛',
+      calories: 400, protein: 16, carbs: 58, fat: 8,
+      servingSize: '1 plate', servingQty: 1, unit: 'plate'),
   ];
 
   static const List<FoodItem> dinnerItems = [
@@ -222,6 +256,23 @@ class FoodDatabase {
       description: 'Rice with BBQ chicken & coleslaw', icon: '🍖',
       calories: 650, protein: 32, carbs: 68, fat: 24,
       servingSize: '1 plate', servingQty: 1, unit: 'plate'),
+    // ── Diet-plan recovery dinners (post-gym) ──
+    FoodItem(id: 'd21', name: 'Jaffna Chickpea Salad', category: 'dinner',
+      description: 'Boiled chana, onion, chili, tomato, lime, cucumber', icon: '🥗',
+      calories: 320, protein: 14, carbs: 40, fat: 10,
+      servingSize: '1 large bowl', servingQty: 1, unit: 'bowl'),
+    FoodItem(id: 'd22', name: 'Egg Salad (Jaffna)', category: 'dinner',
+      description: '2 boiled eggs with onion, chili, tomato, lime', icon: '🥚',
+      calories: 240, protein: 16, carbs: 12, fat: 14,
+      servingSize: '1 bowl', servingQty: 1, unit: 'bowl'),
+    FoodItem(id: 'd23', name: 'Wheat Rotti & Fish Curry', category: 'dinner',
+      description: '2 wheat rottis + Jaffna fish curry', icon: '🫓',
+      calories: 440, protein: 28, carbs: 44, fat: 16,
+      servingSize: '1 serving', servingQty: 1, unit: 'serving'),
+    FoodItem(id: 'd24', name: 'Wheat Rotti & Dhal', category: 'dinner',
+      description: '2 wheat rottis + dhal curry', icon: '🫓',
+      calories: 380, protein: 16, carbs: 52, fat: 12,
+      servingSize: '1 serving', servingQty: 1, unit: 'serving'),
   ];
 
   static const List<FoodItem> snackItems = [
@@ -297,6 +348,15 @@ class FoodDatabase {
       description: 'Sri Lankan milk toffee', icon: '🍬',
       calories: 80, protein: 1, carbs: 14, fat: 2,
       servingSize: '2 pieces', servingQty: 2, unit: 'pc'),
+    // ── Pre-gym ignition snacks ──
+    FoodItem(id: 's19', name: 'Roasted Chickpeas (Kadalai)', category: 'snack',
+      description: 'Roasted chickpeas — quick pre-gym glycogen', icon: '🫘',
+      calories: 130, protein: 7, carbs: 20, fat: 3,
+      servingSize: '30g handful', servingQty: 1, unit: 'handful'),
+    FoodItem(id: 's20', name: 'Roasted Peanuts', category: 'snack',
+      description: 'Plain roasted peanuts', icon: '🥜',
+      calories: 170, protein: 7, carbs: 6, fat: 14,
+      servingSize: '30g handful', servingQty: 1, unit: 'handful'),
   ];
 
   /// Side dishes & curries - can be added to any meal

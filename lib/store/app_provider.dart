@@ -55,26 +55,75 @@ class AppState {
 class AppNotifier extends Notifier<AppState> {
   late Box _box;
 
+  /// Bump this whenever the built-in plan templates change. On launch, any
+  /// saved schedule from an older version is rebuilt from the current
+  /// template so renamed/retimed items (e.g. evening gym) take effect.
+  static const int planVersion = 3;
+
   @override
   AppState build() {
     _box = Hive.box('vitatrack_data');
 
     final profile = _box.get('profile') as UserProfile?;
-    final waterConfig = _box.get('waterConfig') as WaterConfig?;
-    final schedule = (_box.get('schedule') as List?)?.cast<ScheduleItem>() ?? [];
+    var waterConfig = _box.get('waterConfig') as WaterConfig?;
+    var schedule = (_box.get('schedule') as List?)?.cast<ScheduleItem>() ?? [];
     final reminders = (_box.get('reminders') as List?)?.cast<Reminder>() ?? [];
-    final records = (_box.get('records') as List?)?.cast<DayRecord>() ?? [];
+    var records = (_box.get('records') as List?)?.cast<DayRecord>() ?? [];
     final weightEntries = (_box.get('weightEntries') as List?)?.cast<WeightEntry>() ?? [];
-    final activityLog = (_box.get('activityLog') as List?)?.cast<LogEntry>() ?? [];
+    var activityLog = (_box.get('activityLog') as List?)?.cast<LogEntry>() ?? [];
     final streak = _box.get('streak', defaultValue: 0) as int;
     final skippedRaw = (_box.get('skippedToday') as List?)?.cast<String>() ?? [];
     final skippedDate = _box.get('skippedDate', defaultValue: '') as String;
     final todayStr = DateTime.now().toIso8601String().substring(0, 10);
-    // Reset skipped items at midnight
-    final skippedIds = skippedDate == todayStr ? skippedRaw.toSet() : <String>{};
-    if (skippedDate != todayStr) {
+
+    // ── Daily rollover ─────────────────────────────────────────
+    // Everything on the home screen is "today only". When the calendar
+    // day changes we archive yesterday's progress into [records] and
+    // start the new day fresh: schedule unchecked, water back to 0,
+    // activity log cleared, skipped items cleared.
+    final lastActiveDate = _box.get('lastActiveDate', defaultValue: '') as String;
+    var skippedIds = skippedDate == todayStr ? skippedRaw.toSet() : <String>{};
+    if (lastActiveDate != todayStr) {
+      // Archive the previous day before wiping it (skip the very first run).
+      if (lastActiveDate.isNotEmpty && schedule.isNotEmpty) {
+        records = [
+          ...records.where((r) => r.date != lastActiveDate),
+          _buildDayRecord(lastActiveDate, schedule, waterConfig, profile, activityLog),
+        ];
+        _box.put('records', records);
+      }
+      // Fresh start for the new day.
+      schedule = schedule.map((i) => i.copyWith(done: false)).toList();
+      waterConfig = waterConfig?.copyWith(consumed: 0);
+      activityLog = <LogEntry>[];
+      skippedIds = <String>{};
+
+      _box.put('schedule', schedule);
+      _box.put('waterConfig', waterConfig);
+      _box.put('activityLog', activityLog);
       _box.put('skippedToday', <String>[]);
       _box.put('skippedDate', todayStr);
+      _box.put('lastActiveDate', todayStr);
+    } else if (skippedDate != todayStr) {
+      _box.put('skippedToday', <String>[]);
+      _box.put('skippedDate', todayStr);
+    }
+
+    // ── Plan template migration ────────────────────────────────
+    // Rebuild the schedule from the current template when the bundled
+    // plan has changed, so updated names/times replace the old saved
+    // ones (preserving today's done states where titles still match).
+    final storedPlanVersion = _box.get('planVersion', defaultValue: 0) as int;
+    if (profile != null && storedPlanVersion < planVersion) {
+      final fresh = BmiEngine.generatePlan(profile);
+      final doneTitles = schedule.where((i) => i.done).map((i) => i.title).toSet();
+      schedule = fresh
+          .map((i) => doneTitles.contains(i.title) ? i.copyWith(done: true) : i)
+          .toList();
+      _box.put('schedule', schedule);
+      // Refresh the gym split to the latest default schedule too.
+      _box.put('gymSplit', Map.from(defaultGymSplit));
+      _box.put('planVersion', planVersion);
     }
 
     // Auto-sync schedule notifications on startup
@@ -96,6 +145,52 @@ class AppNotifier extends Notifier<AppState> {
       activityLog: activityLog,
       streak: streak,
       skippedIds: skippedIds,
+    );
+  }
+
+  /// Snapshot a finished day into a [DayRecord] for the calendar/history.
+  DayRecord _buildDayRecord(
+    String date,
+    List<ScheduleItem> schedule,
+    WaterConfig? water,
+    UserProfile? profile,
+    List<LogEntry> log,
+  ) {
+    final meals = schedule.where((i) => i.type == ScheduleItemType.meal).toList();
+    final mealsDone = meals.where((i) => i.done).length;
+    final dietScore = meals.isEmpty ? 0.0 : mealsDone / meals.length * 100;
+
+    final waterConsumed = water?.consumed ?? 0.0;
+    final waterTarget = water?.target ?? 0.0;
+    final waterScore = waterTarget > 0 ? (waterConsumed / waterTarget * 100).clamp(0.0, 100.0) : 0.0;
+
+    final workoutDone = schedule.any((i) =>
+      (i.type == ScheduleItemType.workout || i.type == ScheduleItemType.walk) && i.done);
+
+    final calEaten = schedule.where((i) => i.done).fold(0.0, (s, i) => s + i.calories);
+    final protEaten = schedule.where((i) => i.done).fold(0.0, (s, i) => s + i.protein);
+    final calTarget = profile?.macroTargets.calories ?? 0.0;
+    final protTarget = profile?.macroTargets.protein ?? 0.0;
+    final calScore = calTarget > 0 ? (calEaten / calTarget * 100).clamp(0.0, 100.0) : 0.0;
+    final protScore = protTarget > 0 ? (protEaten / protTarget * 100).clamp(0.0, 100.0) : 0.0;
+
+    // Overall day status
+    final completion = (dietScore + waterScore + (workoutDone ? 100 : 0)) / 3;
+    final status = completion >= 80 ? 'success' : completion >= 40 ? 'partial' : 'failed';
+
+    return DayRecord(
+      date: date,
+      status: status,
+      dietScore: dietScore,
+      waterScore: waterScore,
+      workoutDone: workoutDone,
+      calorieScore: calScore,
+      proteinScore: protScore,
+      waterConsumed: waterConsumed,
+      caloriesEaten: calEaten,
+      proteinEaten: protEaten,
+      bmiAtDay: profile?.bmi ?? 0.0,
+      log: log,
     );
   }
 
@@ -436,12 +531,12 @@ class AppNotifier extends Notifier<AppState> {
 
   // --- Gym Weekly Split ---
   static const Map<String, Map<String, dynamic>> defaultGymSplit = {
-    'Mon': {'focus': 'Legs & Abs', 'icon': '\u{1F9B5}', 'muscles': ['Legs', 'Abs'], 'exercises': ['Barbell Squat', 'Leg Press', 'Walking Lunges', 'Leg Curls', 'Calf Raises', 'Crunches', 'Plank Hold', 'Russian Twists']},
-    'Tue': {'focus': 'Chest & Biceps', 'icon': '\u{1F4AA}', 'muscles': ['Chest', 'Biceps'], 'exercises': ['Bench Press', 'Incline Dumbbell Press', 'Cable Flyes', 'Push-ups', 'Barbell Curls', 'Hammer Curls', 'Concentration Curls']},
-    'Wed': {'focus': 'Back & Triceps', 'icon': '\u{1F3CB}', 'muscles': ['Back', 'Triceps'], 'exercises': ['Deadlifts', 'Lat Pulldown', 'Bent Over Rows', 'Seated Cable Rows', 'Pull-ups', 'Tricep Pushdown', 'Skull Crushers', 'Overhead Extension']},
-    'Thu': {'focus': 'Shoulders & Abs', 'icon': '\u{1F9D8}', 'muscles': ['Shoulders', 'Abs'], 'exercises': ['Overhead Press', 'Lateral Raises', 'Front Raises', 'Face Pulls', 'Barbell Shrugs', 'Hanging Leg Raises', 'Mountain Climbers']},
-    'Fri': {'focus': 'Full Body', 'icon': '\u{26A1}', 'muscles': ['Legs', 'Chest', 'Back', 'Shoulders'], 'exercises': ['Barbell Squat', 'Bench Press', 'Deadlifts', 'Pull-ups', 'Overhead Press', 'Chest Dips', 'Plank Hold']},
-    'Sat': {'focus': 'Cardio & HIIT', 'icon': '\u{1F3C3}', 'muscles': ['Cardio'], 'exercises': ['Running', 'Jump Rope', 'Burpees', 'Rowing Machine', 'Mountain Climbers']},
+    'Mon': {'focus': 'Chest, Shoulders & Triceps', 'icon': '\u{1F4AA}', 'muscles': ['Chest', 'Shoulders', 'Triceps'], 'exercises': ['Bench Press', 'Incline Dumbbell Press', 'Cable Flyes', 'Overhead Press', 'Lateral Raises', 'Tricep Pushdown', 'Skull Crushers', 'Chest Dips']},
+    'Tue': {'focus': 'Back & Biceps', 'icon': '\u{1F3CB}', 'muscles': ['Back', 'Biceps'], 'exercises': ['Deadlifts', 'Lat Pulldown', 'Bent Over Rows', 'Seated Cable Rows', 'Pull-ups', 'Barbell Curls', 'Hammer Curls', 'Concentration Curls']},
+    'Wed': {'focus': 'Legs & Abs', 'icon': '\u{1F9B5}', 'muscles': ['Legs', 'Abs'], 'exercises': ['Barbell Squat', 'Leg Press', 'Walking Lunges', 'Leg Curls', 'Calf Raises', 'Crunches', 'Plank Hold', 'Russian Twists']},
+    'Thu': {'focus': 'Chest, Shoulders & Triceps', 'icon': '\u{1F4AA}', 'muscles': ['Chest', 'Shoulders', 'Triceps'], 'exercises': ['Bench Press', 'Incline Dumbbell Press', 'Cable Flyes', 'Overhead Press', 'Lateral Raises', 'Tricep Pushdown', 'Skull Crushers', 'Chest Dips']},
+    'Fri': {'focus': 'Back & Biceps', 'icon': '\u{1F3CB}', 'muscles': ['Back', 'Biceps'], 'exercises': ['Deadlifts', 'Lat Pulldown', 'Bent Over Rows', 'Seated Cable Rows', 'Pull-ups', 'Barbell Curls', 'Hammer Curls', 'Concentration Curls']},
+    'Sat': {'focus': 'Cardio', 'icon': '\u{1F3C3}', 'muscles': ['Cardio'], 'exercises': ['Running', 'Jump Rope', 'Burpees', 'Rowing Machine', 'Mountain Climbers']},
     'Sun': {'focus': 'Rest Day', 'icon': '\u{1F6CC}', 'muscles': ['Recovery'], 'exercises': ['Stretching', 'Light Walk', 'Foam Rolling']},
   };
 

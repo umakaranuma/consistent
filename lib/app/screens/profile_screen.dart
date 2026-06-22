@@ -116,43 +116,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       'Current weight',
                       '${p.currentWeight.toStringAsFixed(1)} kg',
                       Icons.monitor_weight_outlined,
-                      () => _editNumber('Weight (kg)', p.currentWeight, (v) {
-                        final bmi = BmiEngine.calculateBmi(v, p.heightCm);
-                        final cat = BmiEngine.getBmiCategory(bmi);
-                        final tdee = BmiEngine.calculateTDEE(
-                          weightKg: v,
-                          heightCm: p.heightCm,
-                          ageYears: p.age,
-                          gender: p.gender,
-                          activityLevel: p.activityLevel,
-                        );
-                        final cal = BmiEngine.getCalorieTarget(
-                          tdee: tdee,
-                          bmiCategory: cat,
-                          mode: p.mode,
-                          gymGoal: p.gymGoal,
-                        );
-                        final macros = BmiEngine.getMacroTargets(
-                          calories: cal,
-                          weightKg: v,
-                          mode: p.mode,
-                          gymGoal: p.gymGoal,
-                        );
-                        final water = BmiEngine.getWaterTarget(v, p.mode);
-                        _save(
-                          p.copyWith(
-                            currentWeight: v,
-                            bmi: bmi,
-                            bmiCategory: cat,
-                            macroTargets: macros,
-                          ),
-                        );
-                        ref
-                            .read(appProvider.notifier)
-                            .setWaterConfig(
-                              state.waterConfig!.copyWith(target: water),
-                            );
-                      }),
+                      () => _editWeightWithHistory(),
                     ),
                     _row(
                       'Goal weight',
@@ -642,6 +606,102 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               _snack('$label updated');
             }
           }),
+        ],
+      ),
+    );
+  }
+
+  /// Log a new weight AND show the full weight history below the input.
+  /// Uses addWeightEntry so BMI, macros, water target and history all
+  /// update together.
+  void _editWeightWithHistory() {
+    final ctrl = TextEditingController(
+      text: ref.read(appProvider).profile?.currentWeight.toStringAsFixed(1) ?? '70.0',
+    );
+    _showSheet(
+      'Update Weight',
+      (pop) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _sheetField(ctrl, 'Weight (kg)', isNum: true),
+          const SizedBox(height: 16),
+          _sheetBtn('Save & Update', () {
+            final v = double.tryParse(ctrl.text);
+            if (v != null && v > 20 && v < 300) {
+              final p = ref.read(appProvider).profile!;
+              final bmi = BmiEngine.calculateBmi(v, p.heightCm);
+              final now = DateTime.now();
+              final dateStr =
+                  '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+              ref.read(appProvider.notifier).addWeightEntry(
+                    WeightEntry(date: dateStr, weight: v, bmi: bmi),
+                  );
+              _snack('Weight logged! BMI & targets updated.');
+            }
+          }),
+          const SizedBox(height: 22),
+          Text(
+            'Weight History',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Consumer(
+            builder: (context, ref, _) {
+              final entries =
+                  ref.watch(appProvider).weightEntries.reversed.toList();
+              if (entries.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text('No history yet — log your first weight above.',
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                );
+              }
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 260),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: entries.length,
+                  itemBuilder: (ctx, i) {
+                    final e = entries[i];
+                    final isLatest = i == 0;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.bg3,
+                        borderRadius: BorderRadius.circular(12),
+                        border: isLatest
+                            ? Border.all(color: AppColors.accent.withValues(alpha: 0.4))
+                            : null,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(e.date,
+                              style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                          Row(
+                            children: [
+                              Text('${e.weight.toStringAsFixed(1)} kg',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, color: AppColors.white)),
+                              const SizedBox(width: 12),
+                              Text('BMI ${e.bmi.toStringAsFixed(1)}',
+                                  style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
+          ),
         ],
       ),
     );

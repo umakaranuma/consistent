@@ -198,7 +198,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
   // ─── App Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildAppBar(UserProfile profile, int streak) {
-    final hour = DateTime.now().hour;
+    final now = DateTime.now();
+    final hour = now.hour;
     String greeting;
     if (hour < 12) {
       greeting = 'Good morning';
@@ -208,8 +209,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       greeting = 'Good evening';
     }
 
+    const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final todayLabel =
+        '${weekdays[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}';
+
     return SliverAppBar(
-      expandedHeight: 110,
+      expandedHeight: 124,
       floating: false,
       pinned: true,
       backgroundColor: AppColors.bg0,
@@ -226,6 +233,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   Text('$greeting, ${profile.name}', style: TextStyle(
                     fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.white,
                   )),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(todayLabel, style: TextStyle(
+                      fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary,
+                    )),
+                  ),
                   if (streak > 0)
                     Container(
                       margin: EdgeInsets.only(top: 4),
@@ -1574,6 +1587,273 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     );
   }
 
+  // --- Day-End Summary ---
+  void _showDayEndSummary(BuildContext context, WidgetRef ref) {
+    final notifier = ref.read(appProvider.notifier);
+    final state = ref.read(appProvider);
+    final profile = state.profile;
+    if (profile == null) return;
+
+    // Real tasks only (ignore user-logged custom foods).
+    final tasks = state.schedule.where((i) => !i.isCustom).toList();
+    final done = tasks.where((i) => i.done).toList();
+    final skipped = tasks.where((i) => !i.done && state.skippedIds.contains(i.id)).toList();
+    final missed = tasks
+        .where((i) => !i.done && !state.skippedIds.contains(i.id))
+        .toList();
+
+    final dietScore = notifier.dietScore;
+    final waterScore = notifier.waterScore;
+    final workoutDone = tasks.any((i) =>
+        (i.type == ScheduleItemType.workout || i.type == ScheduleItemType.walk) && i.done);
+    final calEaten = notifier.caloriesEaten;
+    final calTarget = profile.macroTargets.calories;
+    final calPct = calTarget > 0 ? (calEaten / calTarget * 100).round() : 0;
+    final protEaten = notifier.proteinEaten;
+    final protTarget = profile.macroTargets.protein;
+
+    // Today's health insights, computed from the day's actual activity.
+    final insights = notifier.healthInsights;
+
+    // Overall completion → status
+    final completion = tasks.isEmpty
+        ? 0
+        : ((done.length / tasks.length) * 100).round();
+    String statusLabel;
+    Color statusColor;
+    String statusEmoji;
+    if (completion >= 80 && waterScore >= 70) {
+      statusLabel = 'Great day';
+      statusColor = AppColors.green;
+      statusEmoji = '🎉';
+    } else if (completion >= 40) {
+      statusLabel = 'Partial day';
+      statusColor = AppColors.amber;
+      statusEmoji = '💪';
+    } else {
+      statusLabel = 'Off-track day';
+      statusColor = AppColors.red;
+      statusEmoji = '🌧️';
+    }
+
+    // Build short analysis tips
+    final tips = <String>[];
+    if (dietScore < 100) {
+      final mealsTotal = tasks.where((i) => i.type == ScheduleItemType.meal).length;
+      final mealsDone = done.where((i) => i.type == ScheduleItemType.meal).length;
+      tips.add('You completed $mealsDone of $mealsTotal meals. Consistent meals keep energy and metabolism steady.');
+    }
+    if (waterScore < 70) {
+      tips.add('Hydration was only $waterScore% — aim higher tomorrow, especially around your gym session.');
+    }
+    if (!workoutDone) {
+      tips.add('No workout/walk logged. Even 20 minutes counts — try not to skip movement.');
+    }
+    if (calTarget > 0 && calPct < 60) {
+      tips.add('Calories were low ($calPct% of target). Under-eating slows recovery and muscle repair.');
+    } else if (calTarget > 0 && calPct > 110) {
+      tips.add('Calories went over target ($calPct%). A short walk tomorrow helps balance it out.');
+    }
+    if (protTarget > 0 && protEaten < protTarget * 0.7) {
+      tips.add('Protein was under target (${protEaten.toInt()}/${protTarget.toInt()}g). Add eggs, fish, or chana.');
+    }
+    if (missed.isNotEmpty) {
+      tips.add('${missed.length} task${missed.length == 1 ? '' : 's'} went untouched today — they\'re marked below as "Not done".');
+    }
+    if (tips.isEmpty) {
+      tips.add('Everything on plan — fantastic consistency. Keep the streak alive!');
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.88),
+        decoration: BoxDecoration(
+          color: AppColors.bg1,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40, height: 4,
+              decoration: BoxDecoration(color: AppColors.textMuted, borderRadius: BorderRadius.circular(2)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: Row(children: [
+                Text(statusEmoji, style: const TextStyle(fontSize: 26)),
+                const SizedBox(width: 10),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Day Complete', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text('$completion% of your plan done', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  ],
+                )),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(20)),
+                  child: Text(statusLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: statusColor)),
+                ),
+              ]),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Quick stat chips
+                    Row(children: [
+                      _daySummaryStat('Diet', '$dietScore%', AppColors.green),
+                      const SizedBox(width: 8),
+                      _daySummaryStat('Water', '$waterScore%', AppColors.blue),
+                      const SizedBox(width: 8),
+                      _daySummaryStat('Workout', workoutDone ? '✓' : '—', AppColors.amber),
+                      const SizedBox(width: 8),
+                      _daySummaryStat('Calories', '$calPct%', AppColors.accent),
+                    ]),
+                    const SizedBox(height: 16),
+                    if (done.isNotEmpty)
+                      _daySummarySection('✅ Completed', done, AppColors.green),
+                    if (skipped.isNotEmpty)
+                      _daySummarySection('⏭️ Skipped', skipped, AppColors.textMuted),
+                    if (missed.isNotEmpty)
+                      _daySummarySection('⭕ Not done', missed, AppColors.red),
+                    const SizedBox(height: 8),
+                    // Today's insights (from the day's actual activity)
+                    if (insights.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text("Today's Insights",
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                      ...insights.map((ins) {
+                        final c = _insightColor(ins['type'] ?? 'info');
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: c.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: c.withValues(alpha: 0.25)),
+                          ),
+                          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(ins['icon'] ?? '💡', style: const TextStyle(fontSize: 16)),
+                            const SizedBox(width: 10),
+                            Expanded(child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(ins['title'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: c)),
+                                const SizedBox(height: 2),
+                                Text(ins['msg'] ?? '', style: TextStyle(fontSize: 11, height: 1.4, color: AppColors.textSecondary)),
+                              ],
+                            )),
+                          ]),
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                    ],
+                    // Analysis
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.bg2,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border1),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Icon(Icons.insights, size: 16, color: AppColors.accent),
+                            const SizedBox(width: 6),
+                            const Text('Analysis', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ]),
+                          const SizedBox(height: 10),
+                          ...tips.map((t) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Text('•  ', style: TextStyle(fontSize: 13, color: AppColors.accent)),
+                              Expanded(child: Text(t, style: TextStyle(fontSize: 12, height: 1.4, color: AppColors.textSecondary))),
+                            ]),
+                          )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('Good night 🌙', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _daySummaryStat(String label, String value, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.bg2,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(children: [
+          Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color)),
+          const SizedBox(height: 2),
+          Text(label, style: TextStyle(fontSize: 9, color: AppColors.textSecondary)),
+        ]),
+      ),
+    );
+  }
+
+  Widget _daySummarySection(String title, List<ScheduleItem> items, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Text('$title (${items.length})',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+        ),
+        ...items.map((i) => Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(children: [
+            SizedBox(width: 40, child: Text(i.time, style: TextStyle(fontSize: 11, color: AppColors.textMuted))),
+            Text(i.icon, style: const TextStyle(fontSize: 13)),
+            const SizedBox(width: 6),
+            Expanded(child: Text(i.title,
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                maxLines: 1, overflow: TextOverflow.ellipsis)),
+          ]),
+        )),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
   // --- Single Timeline Item ---
   Widget _buildRoutineItem(BuildContext context, ScheduleItem item,
       List<ScheduleItem> loggedFoods, int nowMin, WidgetRef ref) {
@@ -1587,7 +1867,13 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       GestureDetector(
         onTap: () {
           if (isSkipped) return; // Can't toggle skipped items
+          final wasDone = item.done;
           ref.read(appProvider.notifier).toggleScheduleItem(item.id);
+          // Marking the day's Sleep item closes out the day → show a
+          // wrap-up of what was done, skipped, and left untouched.
+          if (item.type == ScheduleItemType.sleep && !wasDone) {
+            _showDayEndSummary(context, ref);
+          }
         },
         onLongPress: () => _showItemOptionsSheet(context, item, isSkipped, ref),
         child: Container(
@@ -1854,6 +2140,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     bool setReminder = true;
 
     final activityOptions = [
+      // Time-of-day activities — selecting one sets a sensible default time
+      // and the item is placed on the timeline card according to that time.
+      {'key': 'morning', 'icon': '\u{1F305}', 'label': 'Morning', 'sub': 'Morning activity', 'time': '07:00'},
+      {'key': 'afternoon', 'icon': '\u{2600}', 'label': 'Afternoon', 'sub': 'Afternoon activity', 'time': '13:00'},
+      {'key': 'evening', 'icon': '\u{1F307}', 'label': 'Evening', 'sub': 'Evening activity', 'time': '18:30'},
+      {'key': 'night', 'icon': '\u{1F319}', 'label': 'Night', 'sub': 'Night activity', 'time': '21:00'},
       {'key': 'workout', 'icon': '\u{1F3CB}', 'label': 'Workout', 'sub': '30 min session'},
       {'key': 'walk', 'icon': '\u{1F6B6}', 'label': 'Walk', 'sub': '20 min walk'},
       {'key': 'yoga', 'icon': '\u{1F9D8}', 'label': 'Yoga', 'sub': '30 min yoga'},
@@ -1905,6 +2197,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         if (selectedType != 'custom') {
                           titleCtrl.text = opt['label']!;
                           subCtrl.text = opt['sub']!;
+                        }
+                        // Time-of-day presets also set the default time slot.
+                        if (opt['time'] != null) {
+                          timeCtrl.text = opt['time']!;
                         }
                       }),
                       child: Container(
@@ -2354,6 +2650,15 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         ],
       ),
     );
+  }
+
+  Color _insightColor(String type) {
+    switch (type) {
+      case 'critical': return AppColors.red;
+      case 'warning': return AppColors.amber;
+      case 'good': return AppColors.green;
+      default: return AppColors.accent;
+    }
   }
 
   Widget _buildInsightTile(Map<String, String> insight) {
